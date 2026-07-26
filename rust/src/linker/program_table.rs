@@ -2,6 +2,8 @@ use std::{collections::HashMap};
 
 use crate::ir::nodes::ProgramIR;
 
+use rayon::prelude::*;
+
 pub struct ProgramTable {
     /// ProgramTable is a global table used to resolve imports
     pub by_id: HashMap<i64, ProgramIR>,

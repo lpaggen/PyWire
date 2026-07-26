@@ -21,15 +21,3 @@ pub enum ExprIR {
     CompareExpr(CompareIR),
     CallExpr(CallExprIR),
 }
-
-// impl ExprIR {
-//     pub fn span(&self) -> &SourceSpan {
-//         match self {
-//             ExprIR::Float(node) => node.get_span(),
-//             ExprIR::Integer(node) => &node.span,
-//             ExprIR::Identifier(node) => &node.span,
-//             ExprIR::CallExpr(node) => &node.span,
-//             ExprIR::BinOp(node) => &node.span,
-//         }
-//     }
-// }

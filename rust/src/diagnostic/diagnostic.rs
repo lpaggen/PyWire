@@ -20,7 +20,10 @@ pub enum DiagnosticKind {
     ShapeError,
     MissingBindingValue,
     InvalidBindingIR,
-    IOError
+    IOError,
+    MismatchedAnnotationType,
+    UnknownAssignValue,
+    UnknownBindingKind,
 }
 
 impl Diagnostic {

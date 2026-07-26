@@ -1,11 +1,14 @@
 use crate::linker::symbol_ref::SymbolRef;
 
-#[derive(Debug, Clone)]
+// to do rename all to *Type for clarity
+#[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Tensor(TensorTypeState),  // annotation knows it's a tensor, but doesn't know dimensions or dtype
     Int,
     Float,
     Bool,
+    Bytes,  // frontend TODO
+    Complex,  // TODO add in frontend
     String,
     None,
     Tuple(Vec<Type>),
@@ -17,24 +20,24 @@ pub enum Type {
     Unknown, // may be a valid type, we just don't consider it in this tool
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CallableType {
     pub params: Vec<Type>,
     pub return_type: Box<Type>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ClassType {
     pub symbol: SymbolRef,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TensorTypeState {
     Resolved(TensorType),
     Unresolved,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TensorType {
     pub shape: Vec<DimType>,
     pub dtype: Option<DType>
