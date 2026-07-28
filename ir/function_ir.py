@@ -3,7 +3,7 @@ from .annotation_ir import AnnotationIR
 from .ir_node import IRNode
 from generated import _pb2
 from .expr_ir import ExprIR
-from .stmt_ir import StmtIR
+from .stmt_ir import StmtIR, stmt_to_proto
 from .decl_ir import DeclIR
 
 
@@ -95,7 +95,7 @@ class FunctionIR(DeclIR):
         )
 
         proto.params.extend([p.to_proto() for p in self.params])
-        proto.body.extend([stmt.to_proto() for stmt in self.body])
+        proto.body.extend([stmt_to_proto(stmt) for stmt in self.body])
         proto.decorators.extend([d.to_proto() for d in self.decorators])
 
         if self.returns is not None:
@@ -106,4 +106,10 @@ class FunctionIR(DeclIR):
 
         stmt = _pb2.DeclIR()
         stmt.function.CopyFrom(proto)
+        return stmt
+
+    def to_stmt_proto(self):
+        decl = self.to_proto()
+        stmt = _pb2.StmtIR()
+        stmt.function.CopyFrom(decl.function)
         return stmt

@@ -1,5 +1,5 @@
 from common.span import SourceSpan
-from .stmt_ir import StmtIR
+from .stmt_ir import StmtIR, stmt_to_proto
 from typing import List
 from generated import _pb2
 from .expr_ir import ExprIR
@@ -30,8 +30,8 @@ class WhileLoopIR(StmtIR):
         )
 
         proto.test.CopyFrom(self.test.to_proto())
-        proto.body.extend([stmt.to_proto() for stmt in self.body])
-        proto.orelse.extend([stmt.to_proto() for stmt in self.orelse])
+        proto.body.extend([stmt_to_proto(stmt) for stmt in self.body])
+        proto.orelse.extend([stmt_to_proto(stmt) for stmt in self.orelse])
 
         if self.span is not None:
             proto.span.CopyFrom(self.span.to_proto())

@@ -1,4 +1,4 @@
-from .stmt_ir import StmtIR
+from .stmt_ir import StmtIR, stmt_to_proto
 from common.span import SourceSpan
 from .expr_ir import ExprIR
 from typing import List
@@ -32,8 +32,8 @@ class IfIR(StmtIR):
         )
 
         proto.test.CopyFrom(self.test.to_proto())
-        proto.body.extend([stmt.to_proto() for stmt in self.body])
-        proto.orelse.extend([stmt.to_proto() for stmt in self.orelse])
+        proto.body.extend([stmt_to_proto(stmt) for stmt in self.body])
+        proto.orelse.extend([stmt_to_proto(stmt) for stmt in self.orelse])
 
         if self.span is not None:
             proto.span.CopyFrom(self.span.to_proto())

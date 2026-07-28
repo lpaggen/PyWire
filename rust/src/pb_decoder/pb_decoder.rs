@@ -73,6 +73,21 @@ impl PBDecoder {
                     .map(Self::convert_import)
                     .collect();
 
+                let body = pb_program
+                    .body
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|error| {
+                        io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            format!(
+                                "failed to decode module body in protobuf file '{}': {error}",
+                                path.display()
+                            ),
+                        )
+                    })?;
+
                 programs.push(ProgramIR {
                     module_name: pb_program.module_name,
                     file_path: pb_program.file_path,
@@ -80,6 +95,7 @@ impl PBDecoder {
                     symbols,
                     imports,
                     decls,
+                    body,
                 });
             }
         }
@@ -529,6 +545,14 @@ impl PBDecoder {
                     relative_level: import_stmt.relative_level,
                     span,
                 }))
+            }
+
+            Some(pb::stmt_ir::Kind::Function(function)) => {
+                Ok(StmtIR::Function(Self::convert_function(function)?))
+            }
+
+            Some(pb::stmt_ir::Kind::ClassDecl(class_decl)) => {
+                Ok(StmtIR::Class(Self::convert_class(class_decl)?))
             }
 
             None => {

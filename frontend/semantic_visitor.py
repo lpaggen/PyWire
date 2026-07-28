@@ -56,6 +56,26 @@ class SemanticBuilder(ast.NodeVisitor):
         self.visit(tree)
         return self.builder.finish()
 
+    def visit_Module(self, node: ast.Module):
+        self.builder.body = self.lower_statements(node.body)
+
+    def lower_statements(self, statements):
+        """Lower statements in source order and flatten multi-binding nodes."""
+        lowered_statements = []
+
+        def append_lowered(lowered):
+            if lowered is None:
+                return
+            if isinstance(lowered, list):
+                for item in lowered:
+                    append_lowered(item)
+                return
+            lowered_statements.append(lowered)
+
+        for statement in statements:
+            append_lowered(self.visit(statement))
+        return lowered_statements
+
     def visit_AugAssign(self, node: ast.AugAssign):
         target = node.target
         op = node.op
@@ -70,6 +90,7 @@ class SemanticBuilder(ast.NodeVisitor):
         )
 
     def visit_Import(self, node: ast.Import):
+        imports = []
         for alias in node.names:
             module_name = alias.name
             bound_name = alias.asname or module_name.split(".")[0]
@@ -81,19 +102,23 @@ class SemanticBuilder(ast.NodeVisitor):
                 span=SourceSpan.span(node, self.file_path),
             )
 
-            self.builder.add_import(
-                local_symbol_id=symbol_id,
-                scope_id=self.current_scope(),
-                kind=ImportKind.IMPORT_MODULE,
-                module_name=module_name,
-                imported_name=None,
-                alias=alias.asname,
-                relative_level=0,
-                span=SourceSpan.span(node, self.file_path),
+            imports.append(
+                self.builder.add_import(
+                    local_symbol_id=symbol_id,
+                    scope_id=self.current_scope(),
+                    kind=ImportKind.IMPORT_MODULE,
+                    module_name=module_name,
+                    imported_name=None,
+                    alias=alias.asname,
+                    relative_level=0,
+                    span=SourceSpan.span(node, self.file_path),
+                )
             )
+        return imports
 
     def visit_ImportFrom(self, node: ast.ImportFrom):
         module_name = node.module  # ex. "a" in: from a import b
+        imports = []
 
         for alias in node.names:
             imported_name = alias.name  # ex "b"
@@ -106,16 +131,19 @@ class SemanticBuilder(ast.NodeVisitor):
                 span=SourceSpan.span(node, self.file_path),
             )
 
-            self.builder.add_import(
-                local_symbol_id=symbol_id,
-                scope_id=self.current_scope(),
-                kind=ImportKind.IMPORT_FROM,
-                module_name=module_name,
-                imported_name=imported_name,
-                alias=alias.asname,
-                relative_level=node.level,
-                span=SourceSpan.span(node, self.file_path),
+            imports.append(
+                self.builder.add_import(
+                    local_symbol_id=symbol_id,
+                    scope_id=self.current_scope(),
+                    kind=ImportKind.IMPORT_FROM,
+                    module_name=module_name,
+                    imported_name=imported_name,
+                    alias=alias.asname,
+                    relative_level=node.level,
+                    span=SourceSpan.span(node, self.file_path),
+                )
             )
+        return imports
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         binding_scope = self.current_scope()
@@ -157,15 +185,11 @@ class SemanticBuilder(ast.NodeVisitor):
                 )
             )
 
-        body = []
-        for stmt in node.body:
-            lowered = self.visit(stmt)
-            if lowered is not None:
-                body.append(lowered)
+        body = self.lower_statements(node.body)
 
         self.scope_stack.pop()
 
-        self.builder.add_function(
+        return self.builder.add_function(
             symbol_id=fn_symbol_id,
             name=node.name,
             scope_id=binding_scope,
@@ -198,15 +222,11 @@ class SemanticBuilder(ast.NodeVisitor):
         self.scope_stack.append(class_scope_id)
 
         # TODO modify classIR to have a body 
-        body = []
-        for stmt in node.body:
-            lowered = self.visit(stmt)
-            if lowered is not None:
-                body.append(lowered)
+        body = self.lower_statements(node.body)
 
         self.scope_stack.pop()
 
-        self.builder.add_class(
+        return self.builder.add_class(
             symbol_id=class_symbol_id,
             name=node.name,
             scope_id=binding_scope,
@@ -219,7 +239,7 @@ class SemanticBuilder(ast.NodeVisitor):
 
     def visit_AnnAssign(self, node: ast.AnnAssign):
         annotation_ir = self.lower_annotation(node.annotation)
-        self.lower_assignment(
+        return self.lower_assignment(
             target=node.target, 
             value=node.value, 
             kind=BindingKind.BINDING_ANNASSIGN, 
@@ -245,17 +265,8 @@ class SemanticBuilder(ast.NodeVisitor):
 
         self.scope_stack.append(loop_scope_id)
 
-        body = []
-        for stmt in node.body:
-            lowered = self.visit(stmt)
-            if lowered is not None:
-                body.append(lowered)
-
-        orelse = []
-        for stmt in node.orelse:
-            lowered = self.visit(stmt)
-            if lowered is not None:
-                orelse.append(lowered)
+        body = self.lower_statements(node.body)
+        orelse = self.lower_statements(node.orelse)
 
         self.scope_stack.pop()
 
@@ -285,17 +296,8 @@ class SemanticBuilder(ast.NodeVisitor):
 
         self.scope_stack.append(loop_scope_id)
 
-        body = []
-        for stmt in node.body:
-            lowered = self.visit(stmt)
-            if lowered is not None:
-                body.append(lowered)
-
-        orelse = []
-        for stmt in node.orelse:
-            lowered = self.visit(stmt)
-            if lowered is not None:
-                orelse.append(lowered)
+        body = self.lower_statements(node.body)
+        orelse = self.lower_statements(node.orelse)
 
         self.scope_stack.pop()
 
@@ -345,11 +347,11 @@ class SemanticBuilder(ast.NodeVisitor):
         test_ir = self.parse_expr(node.test)
 
         self.scope_stack.append(then_scope_id)
-        body = [ir for stmt in node.body if (ir := self.visit(stmt)) is not None]  # := evaluates to RHS, not assign 
+        body = self.lower_statements(node.body)
         self.scope_stack.pop()
 
         self.scope_stack.append(else_scope_id)
-        orelse = [ir for stmt in node.orelse if (ir := self.visit(stmt)) is not None]
+        orelse = self.lower_statements(node.orelse)
         self.scope_stack.pop()
 
         return IfIR(
@@ -418,15 +420,16 @@ class SemanticBuilder(ast.NodeVisitor):
         raise NotImplementedError(f"Unsupported annotation head: {type(node).__name__}")
 
     def visit_Assign(self, node: ast.Assign):
-        self.lower_assignment(
-            target=node.targets[0],
-            value=node.value,  # !! self.parse_value called downstream
-            kind=BindingKind.BINDING_ASSIGN, 
-            annotation=None, 
-            span=SourceSpan.span(
-                node=node, 
-                file_path=self.file_path)
-        )
+        return [
+            self.lower_assignment(
+                target=target,
+                value=node.value,
+                kind=BindingKind.BINDING_ASSIGN,
+                annotation=None,
+                span=SourceSpan.span(node=node, file_path=self.file_path),
+            )
+            for target in node.targets
+        ]
 
     def lower_assignment(self, target: ast.AST, value: ast.AST, kind: str, annotation: AnnotationIR, span: SourceSpan):
         if isinstance(target, ast.Name):  # x = 5
@@ -439,7 +442,7 @@ class SemanticBuilder(ast.NodeVisitor):
 
             value_ir = self.parse_expr(value) if value is not None else None
 
-            self.builder.add_assign(
+            return self.builder.add_assign(
                 target_id=symbol_id,
                 annotation=annotation,
                 kind=kind,
@@ -466,14 +469,16 @@ class SemanticBuilder(ast.NodeVisitor):
                 )
                 return
 
-            for left, right in zip(target.elts, value.elts):
+            return [
                 self.lower_assignment(
-                    target=left, 
-                    value=right, 
-                    kind=kind, 
-                    annotation=annotation, 
-                    span=span
+                    target=left,
+                    value=right,
+                    kind=kind,
+                    annotation=annotation,
+                    span=span,
                 )
+                for left, right in zip(target.elts, value.elts)
+            ]
 
     def declare_assignment_target(self, target: ast.AST, span: SourceSpan):
         """Declare names bound by targets which are not represented by BindingIR."""
@@ -609,5 +614,3 @@ class SemanticBuilder(ast.NodeVisitor):
             return NoneIR(span=SourceSpan.span(node, self.file_path))
 
         raise NotImplementedError(f"Unsupported expression node: {type(node).__name__}")
-
-    def parse_dim_expr(self, node: ast.AST): ...

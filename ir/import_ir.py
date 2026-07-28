@@ -48,3 +48,8 @@ class ImportIR(StmtIR):
             proto.span.CopyFrom(self.span.to_proto())
 
         return proto
+
+    def to_stmt_proto(self):
+        stmt = _pb2.StmtIR()
+        stmt.import_stmt.CopyFrom(self.to_proto())
+        return stmt

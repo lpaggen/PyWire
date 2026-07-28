@@ -1,6 +1,6 @@
 from common.span import SourceSpan
 from generated import _pb2
-from .stmt_ir import StmtIR
+from .stmt_ir import StmtIR, stmt_to_proto
 from .expr_ir import ExprIR
 from .decl_ir import DeclIR
 
@@ -38,7 +38,7 @@ class ClassIR(DeclIR):
             body_scope_id=self.body_scope_id,
         )
 
-        proto.body.extend([stmt.to_proto() for stmt in self.body])
+        proto.body.extend([stmt_to_proto(stmt) for stmt in self.body])
         proto.bases.extend([base.to_proto() for base in self.bases])
         proto.decorators.extend([decorator.to_proto() for decorator in self.decorators])
 
@@ -47,4 +47,10 @@ class ClassIR(DeclIR):
 
         stmt = _pb2.DeclIR()
         stmt.class_decl.CopyFrom(proto)
+        return stmt
+
+    def to_stmt_proto(self):
+        decl = self.to_proto()
+        stmt = _pb2.StmtIR()
+        stmt.class_decl.CopyFrom(decl.class_decl)
         return stmt

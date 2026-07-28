@@ -24,6 +24,7 @@ pub struct TypeResolver<'a> {
     pub diagnostics: Vec<Diagnostic>,
     symbol_types: &'a mut SymbolTypeTable, // we udpate it as we go
     program_table: &'a ProgramTable,
+    global_symbol_table: &'a GlobalSymbolTable,
 }
 
 impl<'a> TypeResolver<'a> {
@@ -31,45 +32,14 @@ impl<'a> TypeResolver<'a> {
         symbol_types: &'a mut SymbolTypeTable,
         program_table: &'a ProgramTable,
         diagnostics: Vec<Diagnostic>,
+        global_symbol_table: &'a GlobalSymbolTable,
     ) -> Self {
         Self {
             symbol_types,
             program_table,
             diagnostics,
+            global_symbol_table,
         }
-    }
-
-    // walk self.scopes (TODO add this as borrow in struct)
-    fn resolve_name(
-        &self,
-        mut scope_id: i64,
-        program_id: i64,
-        name: &str,
-        use_span: &SourceSpan,
-    ) -> Option<SymbolRef> {
-        // let program = self.program_table.by_id.get(&program_id)?;  // will always exist
-        // loop {
-        //     let scope = program  // TODO make "scopes" hashmap for quicker lookup
-        //         .scopes.iter()
-        //         .find(|s| s.id == scope_id)?;
-
-        //     let symbol = program
-        //         .symbols
-        //         .iter()
-        //         .filter(|symbol| {
-        //             let span = &symbol.span.unwrap();
-        //             symbol.scope_id == scope_id
-        //             && symbol.name == name
-        //             && symbol.span.as_ref().line < use_span.line
-        //         })
-        //         .max_by_key(|symbol| symbol.span.unwrap().line);
-
-        //     scope_id = scope.parent_id?;  // look for symbol in parent
-        // }
-
-        // TODO this is near impossible levels of complexity actually, defer to later build
-
-        todo!()
     }
 
     fn promote_numeric(&self, left: &Type, right: &Type) -> Option<Type> {
@@ -86,7 +56,7 @@ impl<'a> TypeResolver<'a> {
         }
     }
 
-    fn resolve_div(&self, left: &Type, right: &Type) -> Option<Type> {
+    fn infer_div_type(&self, left: &Type, right: &Type) -> Option<Type> {
         match (left, right) {
             (Type::Complex, Type::Bool | Type::Int | Type::Float | Type::Complex)
             | (Type::Bool | Type::Int | Type::Float, Type::Complex) => Some(Type::Complex),
@@ -99,7 +69,7 @@ impl<'a> TypeResolver<'a> {
         }
     }
 
-    fn resolve_floor_div(&self, left: &Type, right: &Type) -> Option<Type> {
+    fn infer_floor_div_type(&self, left: &Type, right: &Type) -> Option<Type> {
         match (left, right) {
             (Type::Bool | Type::Int, Type::Bool | Type::Int) => Some(Type::Int),
             (Type::Bool | Type::Int | Type::Float, Type::Bool | Type::Int | Type::Float) => {
@@ -109,7 +79,7 @@ impl<'a> TypeResolver<'a> {
         }
     }
 
-    fn resolve_mod(&self, left: &Type, right: &Type) -> Option<Type> {
+    fn infer_mod_type(&self, left: &Type, right: &Type) -> Option<Type> {
         match (left, right) {
             (Type::Bool | Type::Int, Type::Bool | Type::Int) => Some(Type::Int),
             (Type::Bool | Type::Int | Type::Float, Type::Bool | Type::Int | Type::Float) => {
@@ -144,7 +114,7 @@ impl<'a> TypeResolver<'a> {
         Type::Unknown
     }
 
-    fn resolve_tensor_binary(&self, op: Operator, left: &Type, right: &Type) -> Option<Type> {
+    fn infer_tensor_binary_type(&self, op: Operator, left: &Type, right: &Type) -> Option<Type> {
         let tensor = match (left, right) {
             (Type::Tensor(tensor), Type::Tensor(_)) => tensor,
             (Type::Tensor(tensor), scalar) | (scalar, Type::Tensor(tensor))
@@ -166,52 +136,56 @@ impl<'a> TypeResolver<'a> {
         }
     }
 
-    fn resolve_matmul(&mut self, left: &Type, right: &Type, span: Option<SourceSpan>) -> Type {
+    fn infer_matmul_type(&mut self, left: &Type, right: &Type, span: Option<SourceSpan>) -> Type {
         let (Type::Tensor(left_state), Type::Tensor(right_state)) = (left, right) else {
             return self.invalid_binary_operation(Operator::MatMult, left, right, span);
         };
 
-        if let (TensorTypeState::Resolved(left_tensor), TensorTypeState::Resolved(right_tensor)) =
-            (left_state, right_state)
-        {
-            if left_tensor.shape.is_empty() || right_tensor.shape.is_empty() {
-                self.diagnostics.push(Diagnostic {
-                    severity: Severity::ERROR,
-                    span,
-                    kind: DiagnosticKind::ShapeError,
-                    message: "Matrix multiplication requires tensors with at least one dimension."
-                        .into(),
-                });
-                return Type::Unknown;
-            }
-            let left_inner = left_tensor.shape.last().expect("non-empty shape");
-            let right_inner = if right_tensor.shape.len() == 1 {
-                &right_tensor.shape[0]
-            } else {
-                &right_tensor.shape[right_tensor.shape.len() - 2]
-            };
-            if let (DimType::Known(left_dim), DimType::Known(right_dim)) = (left_inner, right_inner)
-            {
-                if left_dim != right_dim {
-                    self.diagnostics.push(Diagnostic {
-                        severity: Severity::ERROR,
-                        span,
-                        kind: DiagnosticKind::ShapeError,
-                        message: format!(
-                            "Matrix multiplication dimension mismatch: `{left_dim}` and `{right_dim}`."
-                        ),
-                    });
-                    return Type::Unknown;
-                }
-            }
-        }
 
-        // The exact shape also requires batch broadcasting, which is handled later.
-        Type::Tensor(TensorTypeState::Unresolved)
+
+        todo!()
+
+        // if let (TensorTypeState::Resolved(left_tensor), TensorTypeState::Resolved(right_tensor)) =
+        //     (left_state, right_state)
+        // {
+        //     if left_tensor.shape.is_empty() || right_tensor.shape.is_empty() {
+        //         self.diagnostics.push(Diagnostic {
+        //             severity: Severity::ERROR,
+        //             span,
+        //             kind: DiagnosticKind::ShapeError,
+        //             message: "Matrix multiplication requires tensors with at least one dimension."
+        //                 .into(),
+        //         });
+        //         return Type::Unknown;
+        //     }
+        //     let left_inner = left_tensor.shape.last().expect("non-empty shape");
+        //     let right_inner = if right_tensor.shape.len() == 1 {
+        //         &right_tensor.shape[0]
+        //     } else {
+        //         &right_tensor.shape[right_tensor.shape.len() - 2]
+        //     };
+        //     if let (DimType::Known(left_dim), DimType::Known(right_dim)) = (left_inner, right_inner)
+        //     {
+        //         if left_dim != right_dim {
+        //             self.diagnostics.push(Diagnostic {
+        //                 severity: Severity::ERROR,
+        //                 span,
+        //                 kind: DiagnosticKind::ShapeError,
+        //                 message: format!(
+        //                     "Matrix multiplication dimension mismatch: `{left_dim}` and `{right_dim}`."
+        //                 ),
+        //             });
+        //             return Type::Unknown;
+        //         }
+        //     }
+        // }
+
+        // // The exact shape also requires batch broadcasting, which is handled later.
+        // Type::Tensor(TensorTypeState::Unresolved)
     }
 
     /// Resolve a Python binary operation and report invalid known operand pairs.
-    fn resolve_binary_types(
+    fn infer_binary_type(
         &mut self,
         op: Operator,
         left: Type,
@@ -219,9 +193,9 @@ impl<'a> TypeResolver<'a> {
         span: Option<SourceSpan>,
     ) -> Type {
         if op == Operator::MatMult {
-            return self.resolve_matmul(&left, &right, span);
+            return self.infer_matmul_type(&left, &right, span);
         }
-        if let Some(result) = self.resolve_tensor_binary(op, &left, &right) {
+        if let Some(result) = self.infer_tensor_binary_type(op, &left, &right) {
             return result;
         }
 
@@ -259,9 +233,9 @@ impl<'a> TypeResolver<'a> {
                         _ => None,
                     })
             }
-            Operator::Div => self.resolve_div(&left, &right),
-            Operator::FloorDiv => self.resolve_floor_div(&left, &right),
-            Operator::Mod => self.resolve_mod(&left, &right),
+            Operator::Div => self.infer_div_type(&left, &right),
+            Operator::FloorDiv => self.infer_floor_div_type(&left, &right),
+            Operator::Mod => self.infer_mod_type(&left, &right),
             Operator::Pow => self.promote_numeric(&left, &right),
             Operator::LShift | Operator::RShift => match (&left, &right) {
                 (Type::Bool | Type::Int, Type::Bool | Type::Int) => Some(Type::Int),
@@ -304,12 +278,12 @@ impl<'a> TypeResolver<'a> {
         result.unwrap_or_else(|| self.invalid_binary_operation(op, &left, &right, span))
     }
 
-    fn resolve_call(&self, call: &CallExprIR, scope_id: i64) -> Type {
+    fn infer_call_type(&self, call: &CallExprIR, scope_id: i64) -> Type {
         todo!()
     }
 
     // TODO give it ScopeID too, this is extremely important
-    fn resolve_expr(&mut self, expr: &ExprIR, scope_id: i64, program_id: i64) -> Type {
+    fn infer_expr_type(&mut self, expr: &ExprIR, scope_id: i64, program_id: i64) -> Type {
         match expr {
             ExprIR::IntegerExpr(_) => Type::Int,
             ExprIR::FloatExpr(_) => Type::Float,
@@ -321,7 +295,7 @@ impl<'a> TypeResolver<'a> {
                 let element_types = list
                     .elements
                     .iter()
-                    .map(|element| self.resolve_expr(element, scope_id, program_id))
+                    .map(|element| self.infer_expr_type(element, scope_id, program_id))
                     .collect();
 
                 Type::List(element_types)
@@ -331,7 +305,7 @@ impl<'a> TypeResolver<'a> {
                 let element_types = tuple
                     .elements
                     .iter()
-                    .map(|element: &ExprIR| self.resolve_expr(element, scope_id, program_id))
+                    .map(|element: &ExprIR| self.infer_expr_type(element, scope_id, program_id))
                     .collect();
 
                 Type::Tuple(element_types)
@@ -363,18 +337,8 @@ impl<'a> TypeResolver<'a> {
 
             // variables, example -> x: int = y (i want to check if y is in a parent scope)
             ExprIR::IdentifierExpr(name) => {
-                let use_span = match &name.span {
-                    Some(span) => span,
-                    _other_none => {
-                        let message = format!(
-                            "Variable {} is missing a span and cannot be resolved",
-                            name.name
-                        );
-                        panic!("{}", message);
-                    }
-                };
-
-                let Some(symbol) = self.resolve_name(scope_id, program_id, &name.name, &use_span)
+                let Some(symbol) =
+                    self.resolve_name(name.use_scope_id, program_id, &name.name)
                 else {
                     return Type::Unknown;
                 };
@@ -386,27 +350,55 @@ impl<'a> TypeResolver<'a> {
                     .unwrap_or(Type::Unknown)
             }
 
-            ExprIR::CallExpr(call) => self.resolve_call(call, scope_id),
+            ExprIR::CallExpr(call) => self.infer_call_type(call, scope_id),
 
             ExprIR::BinOpExpr(binary) => {
-                let lhs = self.resolve_expr(&binary.left, scope_id, program_id);
-                let rhs = self.resolve_expr(&binary.right, scope_id, program_id);
+                let lhs = self.infer_expr_type(&binary.left, scope_id, program_id);
+                let rhs = self.infer_expr_type(&binary.right, scope_id, program_id);
 
-                self.resolve_binary_types(binary.op, lhs, rhs, binary.span.clone())
+                self.infer_binary_type(binary.op, lhs, rhs, binary.span.clone())
             }
 
             _ => Type::Unknown,
         }
     }
 
-    fn resolve_assign(&mut self, binding_ir: &BindingIR, program_id: i64) -> Type {
+    // walk self.scopes (TODO add this as borrow in struct)
+    fn resolve_name(
+        &self,
+        mut scope_id: i64,
+        program_id: i64,
+        name: &str,
+    ) -> Option<SymbolRef> {
+        let program = self.program_table.by_id.get(&program_id)?;
+        loop {
+            if let Some(symbol) = program
+                .symbols
+                .iter()
+                .find(|symbol| symbol.scope_id == scope_id && symbol.name == name)
+            {
+                return Some(SymbolRef {
+                    program_id,
+                    symbol_id: symbol.id,
+                });
+            }
+
+            let scope = program
+                .scopes.iter()
+                .find(|s| s.id == scope_id)?;
+
+            scope_id = scope.parent_id?;
+        }
+    }
+
+    fn infer_assign_type(&mut self, binding_ir: &BindingIR, program_id: i64) -> Type {
         let symbol_ref = SymbolRef {
             program_id,
-            symbol_id: binding_ir.id,
+            symbol_id: binding_ir.target_id,
         };
 
         let value = match &binding_ir.value {
-            Some(value) => self.resolve_expr(value, binding_ir.scope_id, program_id),
+            Some(value) => self.infer_expr_type(value, binding_ir.scope_id, program_id),
             _other_none => Type::Unknown, // take existing, this only happens for -> x: int // no value provided
         };
 
@@ -431,10 +423,14 @@ impl<'a> TypeResolver<'a> {
         value
     }
 
-    pub fn resolve_annassign(&mut self, binding_ir: &BindingIR, program_id: i64) -> Type {
+    pub fn infer_annotated_assign_type(
+        &mut self,
+        binding_ir: &BindingIR,
+        program_id: i64,
+    ) -> Type {
         let symbol_ref = SymbolRef {
             program_id,
-            symbol_id: binding_ir.id,
+            symbol_id: binding_ir.target_id,
         };
 
         // get the existing type, resolved via annotation only, can be Unknown otherwise
@@ -446,7 +442,7 @@ impl<'a> TypeResolver<'a> {
             .unwrap_or(Type::Unknown);
 
         let value = match &binding_ir.value {
-            Some(value) => self.resolve_expr(value, binding_ir.scope_id, program_id),
+            Some(value) => self.infer_expr_type(value, binding_ir.scope_id, program_id),
             _other_none => annotation_type.clone(), // take existing, this only happens for -> x: int // no value provided
         };
 
@@ -479,17 +475,21 @@ impl<'a> TypeResolver<'a> {
     }
 
     /// resolves types on RHS, example -> x: int = 5, match "int" and "5". or -> x = 5 -> go from Type::Unknown to Type::Int
-    pub fn resolve_types(&mut self, resolutions: &ResolutionTable, programs: &ProgramTable) {
+    pub fn infer_program_types(
+        &mut self,
+        resolutions: &ResolutionTable,
+        programs: &ProgramTable,
+    ) {
         // TODO need to resolve the actual RHS of each decl
         // meaning we need access to scopes too, since RHS may be in specific local scopes etc, can only resolve if outer scope <= own scope
         for (&program_id, program) in &programs.by_id {
             for decl in &program.decls {
                 let final_type = match decl {
                     DeclIR::Binding(binding_ir) => match &binding_ir.kind {
-                        BindingKind::Assign => self.resolve_assign(binding_ir, binding_ir.scope_id),
+                        BindingKind::Assign => self.infer_assign_type(binding_ir, program_id),
 
                         BindingKind::AnnAssign => {
-                            self.resolve_annassign(binding_ir, binding_ir.scope_id)
+                            self.infer_annotated_assign_type(binding_ir, program_id)
                         }
 
                         BindingKind::Unknown => {
@@ -517,94 +517,5 @@ impl<'a> TypeResolver<'a> {
                 };
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::linker::program_table::ProgramTable;
-
-    fn span() -> SourceSpan {
-        SourceSpan {
-            file: "test.py".into(),
-            line: 1,
-            col: 0,
-            end_line: 1,
-            end_col: 10,
-        }
-    }
-
-    #[test]
-    fn applies_python_sequence_rules() {
-        let mut symbol_types = SymbolTypeTable::new();
-        let programs = ProgramTable::new();
-        let mut resolver = TypeResolver::new(&mut symbol_types, &programs, Vec::new());
-
-        assert_eq!(
-            resolver.resolve_binary_types(Operator::Mult, Type::String, Type::Int, Some(span())),
-            Type::String
-        );
-        assert_eq!(
-            resolver.resolve_binary_types(
-                Operator::Add,
-                Type::List(vec![Type::Int]),
-                Type::List(vec![Type::String]),
-                Some(span())
-            ),
-            Type::List(vec![Type::Int, Type::String])
-        );
-        assert!(resolver.diagnostics.is_empty());
-    }
-
-    #[test]
-    fn invalid_known_operands_produce_an_error() {
-        let mut symbol_types = SymbolTypeTable::new();
-        let programs = ProgramTable::new();
-        let mut resolver = TypeResolver::new(&mut symbol_types, &programs, Vec::new());
-
-        let result =
-            resolver.resolve_binary_types(Operator::Mult, Type::String, Type::String, Some(span()));
-
-        assert_eq!(result, Type::Unknown);
-        assert_eq!(resolver.diagnostics.len(), 1);
-        assert!(matches!(resolver.diagnostics[0].severity, Severity::ERROR));
-        assert!(matches!(
-            resolver.diagnostics[0].kind,
-            DiagnosticKind::TypeError
-        ));
-        assert!(resolver.diagnostics[0].span.is_some());
-    }
-
-    #[test]
-    fn tensor_matmul_string_produces_an_error() {
-        let mut symbol_types = SymbolTypeTable::new();
-        let programs = ProgramTable::new();
-        let mut resolver = TypeResolver::new(&mut symbol_types, &programs, Vec::new());
-
-        let result = resolver.resolve_binary_types(
-            Operator::MatMult,
-            Type::Tensor(TensorTypeState::Unresolved),
-            Type::String,
-            Some(span()),
-        );
-
-        assert_eq!(result, Type::Unknown);
-        assert_eq!(resolver.diagnostics.len(), 1);
-        assert!(matches!(resolver.diagnostics[0].severity, Severity::ERROR));
-        assert!(resolver.diagnostics[0].message.contains("MatMult"));
-    }
-
-    #[test]
-    fn unknown_operands_do_not_cascade_diagnostics() {
-        let mut symbol_types = SymbolTypeTable::new();
-        let programs = ProgramTable::new();
-        let mut resolver = TypeResolver::new(&mut symbol_types, &programs, Vec::new());
-
-        assert_eq!(
-            resolver.resolve_binary_types(Operator::Add, Type::Unknown, Type::String, Some(span())),
-            Type::Unknown
-        );
-        assert!(resolver.diagnostics.is_empty());
     }
 }

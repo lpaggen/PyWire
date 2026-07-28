@@ -1,4 +1,7 @@
-use crate::ir::nodes::{decl_ir::DeclIR, import_ir::ImportIR, scope_ir::ScopeIR, symbol_ir::SymbolIR};
+use crate::ir::{
+    nodes::{decl_ir::DeclIR, import_ir::ImportIR, scope_ir::ScopeIR, symbol_ir::SymbolIR},
+    stmt_ir::StmtIR,
+};
 
 #[derive(Debug, Clone)]
 pub struct ProgramIR {
@@ -8,4 +11,5 @@ pub struct ProgramIR {
     pub symbols: Vec<SymbolIR>,
     pub imports: Vec<ImportIR>,
     pub decls: Vec<DeclIR>,
+    pub body: Vec<StmtIR>,
 }

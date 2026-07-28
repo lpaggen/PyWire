@@ -22,6 +22,7 @@ class IRBuilder:
         self.symbols = []
         self.decls = []
         self.imports = []
+        self.body = []
 
         self.diagnostics = []
 
@@ -65,22 +66,21 @@ class IRBuilder:
         decl_id = self.next_decl_id
         self.next_decl_id += 1
 
-        self.decls.append(
-            FunctionIR(
-                id=decl_id,
-                symbol_id=symbol_id,
-                name=name,
-                scope_id=scope_id,
-                body_scope_id=body_scope_id,
-                body=body,
-                params=params,
-                returns=returns,
-                decorators=decorators,
-                span=span,
-            )
+        function = FunctionIR(
+            id=decl_id,
+            symbol_id=symbol_id,
+            name=name,
+            scope_id=scope_id,
+            body_scope_id=body_scope_id,
+            body=body,
+            params=params,
+            returns=returns,
+            decorators=decorators,
+            span=span,
         )
+        self.decls.append(function)
 
-        return decl_id
+        return function
 
     def add_class(
         self,
@@ -96,21 +96,20 @@ class IRBuilder:
         decl_id = self.next_decl_id
         self.next_decl_id += 1
 
-        self.decls.append(
-            ClassIR(
-                id=decl_id,
-                symbol_id=symbol_id,
-                name=name,
-                scope_id=scope_id,
-                body=body,
-                body_scope_id=body_scope_id,
-                bases=bases,
-                decorators=decorators,
-                span=span,
-            )
+        class_decl = ClassIR(
+            id=decl_id,
+            symbol_id=symbol_id,
+            name=name,
+            scope_id=scope_id,
+            body=body,
+            body_scope_id=body_scope_id,
+            bases=bases,
+            decorators=decorators,
+            span=span,
         )
+        self.decls.append(class_decl)
 
-        return decl_id
+        return class_decl
 
     def declare_symbol(self, name, kind, scope_id, span) -> int:
         """
@@ -138,21 +137,20 @@ class IRBuilder:
     ):
         import_id = self.next_import_id
         self.next_import_id += 1
-        self.imports.append(
-            ImportIR(
-                id=import_id,
-                local_symbol_id=local_symbol_id,
-                scope_id=scope_id,
-                kind=kind,
-                module_name=module_name,
-                imported_name=imported_name,
-                alias=alias,
-                relative_level=relative_level,
-                span=span,
-            )
+        import_ir = ImportIR(
+            id=import_id,
+            local_symbol_id=local_symbol_id,
+            scope_id=scope_id,
+            kind=kind,
+            module_name=module_name,
+            imported_name=imported_name,
+            alias=alias,
+            relative_level=relative_level,
+            span=span,
         )
+        self.imports.append(import_ir)
 
-        return import_id
+        return import_ir
 
     def add_assign(
         self,
@@ -165,19 +163,18 @@ class IRBuilder:
     ):
         decl_id = self.next_decl_id
         self.next_decl_id += 1
-        self.decls.append(
-            BindingIR(
-                id=decl_id,
-                target_id=target_id,
-                annotation=annotation,
-                kind=kind,
-                value=value,
-                scope_id=scope_id,
-                span=span,
-            )
+        binding = BindingIR(
+            id=decl_id,
+            target_id=target_id,
+            annotation=annotation,
+            kind=kind,
+            value=value,
+            scope_id=scope_id,
+            span=span,
         )
+        self.decls.append(binding)
 
-        return decl_id
+        return binding
 
     def finish(self) -> ProgramIR:
         return ProgramIR(
@@ -187,6 +184,7 @@ class IRBuilder:
             symbols=self.symbols,
             imports=self.imports,
             decls=self.decls,
+            body=self.body,
         )
 
     def add_diagnostic(self, msg: str, span: SourceSpan):

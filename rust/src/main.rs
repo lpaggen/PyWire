@@ -49,7 +49,7 @@ fn main() -> Result<(), Vec<Diagnostic>> {
     }
 
     // let resolver: TypeResolver<'_> = TypeResolver::new(&resolved, &types);
-    // resolver.resolve_types();
+    // resolver.infer_program_types();
 
     // println!("{:?}", graph.tarjan_scc());
 

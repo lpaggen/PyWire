@@ -18,6 +18,7 @@ message ProgramIR {
   repeated SymbolIR symbols = 4;
   repeated ImportIR imports = 5;
   repeated DeclIR decls = 6;
+  repeated StmtIR body = 7;
 }
 
 message ScopeIR {
@@ -92,6 +93,8 @@ message StmtIR {
     ForLoopIR for_loop = 6;
     WhileLoopIR while_loop = 7;
     ImportIR import_stmt = 8;
+    FunctionIR function = 9;
+    ClassIR class_decl = 10;
   }
 }
 
