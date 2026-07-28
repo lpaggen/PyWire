@@ -39,6 +39,19 @@ class SemanticBuilder(ast.NodeVisitor):
     def current_scope(self) -> int:
         return self.scope_stack[-1]
 
+    def current_lexical_scope(self) -> int:
+        """Return the nearest module, function, or class scope.
+
+        Block scopes remain on ``scope_stack`` so IR nodes retain their
+        control-flow location, but Python blocks do not own name bindings.
+        """
+        for scope_id in reversed(self.scope_stack):
+            scope = next(scope for scope in self.builder.scopes if scope.id == scope_id)
+            if scope.kind != ScopeKind.SCOPE_BLOCK:
+                return scope_id
+
+        raise RuntimeError("scope stack contains no lexical scope")
+
     def build(self, tree: ast.AST) -> ProgramIR:
         self.visit(tree)
         return self.builder.finish()
@@ -61,10 +74,10 @@ class SemanticBuilder(ast.NodeVisitor):
             module_name = alias.name
             bound_name = alias.asname or module_name.split(".")[0]
 
-            symbol_id = self.builder.declare_symbol(
+            symbol_id = self.builder.get_or_declare_symbol(
                 name=bound_name,
-                kind=ImportKind.IMPORT_MODULE_ALIAS,
-                scope_id=self.current_scope(),
+                kind=SymbolKind.SYMBOL_MODULE_ALIAS,
+                scope_id=self.current_lexical_scope(),
                 span=SourceSpan.span(node, self.file_path),
             )
 
@@ -86,10 +99,10 @@ class SemanticBuilder(ast.NodeVisitor):
             imported_name = alias.name  # ex "b"
             bound_name = alias.asname or alias.name
 
-            symbol_id = self.builder.declare_symbol(
+            symbol_id = self.builder.get_or_declare_symbol(
                 name=bound_name,
-                kind=ImportKind.IMPORT_FROM,
-                scope_id=self.current_scope(),
+                kind=SymbolKind.SYMBOL_VARIABLE,
+                scope_id=self.current_lexical_scope(),
                 span=SourceSpan.span(node, self.file_path),
             )
 
@@ -105,9 +118,10 @@ class SemanticBuilder(ast.NodeVisitor):
             )
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
-        parent_scope: int = self.current_scope()
+        binding_scope = self.current_scope()
+        parent_scope = self.current_lexical_scope()
 
-        fn_symbol_id = self.builder.declare_symbol(
+        fn_symbol_id = self.builder.get_or_declare_symbol(
             name=node.name,
             kind=SymbolKind.SYMBOL_FUNCTION,
             scope_id=parent_scope,
@@ -154,7 +168,7 @@ class SemanticBuilder(ast.NodeVisitor):
         self.builder.add_function(
             symbol_id=fn_symbol_id,
             name=node.name,
-            scope_id=parent_scope,
+            scope_id=binding_scope,
             body_scope_id=body_scope_id,
             params=params,
             body=body,
@@ -164,11 +178,12 @@ class SemanticBuilder(ast.NodeVisitor):
         )
 
     def visit_ClassDef(self, node: ast.ClassDef):
-        parent_scope = self.current_scope()
+        binding_scope = self.current_scope()
+        parent_scope = self.current_lexical_scope()
 
-        class_symbol_id = self.builder.declare_symbol(
+        class_symbol_id = self.builder.get_or_declare_symbol(
             name=node.name,
-            kind=ScopeKind.SCOPE_CLASS,
+            kind=SymbolKind.SYMBOL_CLASS,
             scope_id=parent_scope,
             span=SourceSpan.span(node, self.file_path),
         )
@@ -194,7 +209,7 @@ class SemanticBuilder(ast.NodeVisitor):
         self.builder.add_class(
             symbol_id=class_symbol_id,
             name=node.name,
-            scope_id=parent_scope,
+            scope_id=binding_scope,
             body_scope_id=class_scope_id,
             body=body,
             bases=[self.parse_expr(base) for base in node.bases],
@@ -264,6 +279,7 @@ class SemanticBuilder(ast.NodeVisitor):
             )
         )
 
+        self.declare_assignment_target(node.target, SourceSpan.span(node.target, self.file_path))
         target_ir = self.parse_expr(node.target)
         iter_ir = self.parse_expr(node.iter)
 
@@ -298,13 +314,13 @@ class SemanticBuilder(ast.NodeVisitor):
             value=self.parse_expr(node.value) if node.value else None,
             span=SourceSpan.span(node, self.file_path),
         )
-    
+
     def visit_Expr(self, node: ast.Expr):
         return ExprStmtIR(
             value=self.parse_expr(node.value),
             span=SourceSpan.span(node, self.file_path),
         )
-    
+
     def visit_If(self, node: ast.If):
         parent_scope = self.current_scope()
 
@@ -414,11 +430,11 @@ class SemanticBuilder(ast.NodeVisitor):
 
     def lower_assignment(self, target: ast.AST, value: ast.AST, kind: str, annotation: AnnotationIR, span: SourceSpan):
         if isinstance(target, ast.Name):  # x = 5
-            symbol_id = self.builder.declare_symbol(
-                name=target.id, 
-                kind=SymbolKind.SYMBOL_UNKNOWN, 
-                scope_id=self.current_scope(), 
-                span=span
+            symbol_id = self.builder.get_or_declare_symbol(
+                name=target.id,
+                kind=SymbolKind.SYMBOL_VARIABLE,
+                scope_id=self.current_lexical_scope(),
+                span=span,
             )
 
             value_ir = self.parse_expr(value) if value is not None else None
@@ -458,6 +474,21 @@ class SemanticBuilder(ast.NodeVisitor):
                     annotation=annotation, 
                     span=span
                 )
+
+    def declare_assignment_target(self, target: ast.AST, span: SourceSpan):
+        """Declare names bound by targets which are not represented by BindingIR."""
+        if isinstance(target, ast.Name):
+            self.builder.get_or_declare_symbol(
+                name=target.id,
+                kind=SymbolKind.SYMBOL_VARIABLE,
+                scope_id=self.current_lexical_scope(),
+                span=span,
+            )
+            return
+
+        if isinstance(target, (ast.Tuple, ast.List)):
+            for element in target.elts:
+                self.declare_assignment_target(element, span)
 
     def parse_expr(self, node: ast.AST):
         """

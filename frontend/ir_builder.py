@@ -191,3 +191,11 @@ class IRBuilder:
 
     def add_diagnostic(self, msg: str, span: SourceSpan):
         self.diagnostics.append((msg, span))
+
+    def get_or_declare_symbol(self, name, kind, scope_id, span) -> int:
+        """Return the symbol already bound in a lexical scope, or declare it."""
+        for symbol in self.symbols:
+            if symbol.name == name and symbol.scope_id == scope_id:
+                return symbol.id
+
+        return self.declare_symbol(name, kind, scope_id, span)
