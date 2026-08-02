@@ -44,12 +44,17 @@ fn main() -> Result<(), Vec<Diagnostic>> {
     let mut types: SymbolTypeTable = SymbolTypeTable::new();
     types.build(&table, &symbols, &resolved)?;
 
-    for (symbol_ref, symbol_type) in &types.by_ref {
-        println!("{:?}, {:?}", symbol_ref, symbol_type)
-    }
+    // for (symbol_ref, symbol_type) in &types.by_ref {
+    //     println!("{:?}, {:?}", symbol_ref, symbol_type)
+    // }
 
-    // let resolver: TypeResolver<'_> = TypeResolver::new(&resolved, &types);
-    // resolver.infer_program_types();
+    let mut resolver: TypeResolver = TypeResolver::new(&table, &types);
+    resolver.resolve_types();
+
+    // for (id, program) in table.by_id {
+    //     resolver.infer_statements(progr, env, program_id);
+    // }
+
 
     // println!("{:?}", graph.tarjan_scc());
 

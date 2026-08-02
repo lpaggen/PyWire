@@ -28,6 +28,13 @@ impl SymbolTypeTable {
         }
     }
 
+    pub fn get(&self, symbol_ref: &SymbolRef) -> Type {
+        self.by_ref
+            .get(symbol_ref)
+            .cloned()
+            .unwrap_or(Type::Unknown)
+    }
+
     fn parse_binding(&self,
         program_id: i64,
         binding: &BindingIR,
