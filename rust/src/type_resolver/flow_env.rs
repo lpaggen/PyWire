@@ -62,6 +62,7 @@ pub enum FlowValue {
 }
 
 impl FlowValue {
+    /// flattens nested unions, folds duplicate types
     fn union_types(left: &Type, right: &Type) -> Type {
         let mut members = Vec::new();
 
@@ -85,6 +86,7 @@ impl FlowValue {
         }
     }
 
+    /// merges two bound/unbound/maybeunbound value states into the resulting state
     pub fn merge_values(left: &FlowValue, right: &FlowValue) -> FlowValue {
         match (left, right) {
             (FlowValue::Unbound, FlowValue::Unbound) => FlowValue::Unbound,

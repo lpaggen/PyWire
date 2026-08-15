@@ -1,4 +1,4 @@
-use crate::{diagnostic::diagnostic::{Diagnostic, DiagnosticKind}, ir::{expr_ir::ExprIR, nodes::{BindingIR, CallExprIR, binding_ir::BindingKind, identifier_ir}, operator::Operator, stmt_ir::StmtIR}, linker::{program_table::ProgramTable, symbol_ref::SymbolRef}, pb::expr_ir::Kind::Identifier, type_resolver::{flow_env::{FlowEnv, FlowValue}, symbol_type_table::SymbolTypeTable}, types::types::Type};
+use crate::{diagnostic::diagnostic::{Diagnostic, DiagnosticKind}, ir::{expr_ir::ExprIR, nodes::{BindingIR, CallExprIR, binding_ir::BindingKind, identifier_ir}, operator::Operator, stmt_ir::StmtIR}, linker::{program_table::ProgramTable, symbol_ref::SymbolRef}, pb::expr_ir::Kind::Identifier, type_resolver::{flow_env::{self, FlowEnv, FlowValue}, symbol_type_table::SymbolTypeTable}, types::types::Type};
 use crate::diagnostic::diagnostic::Severity;
 
 pub struct TypeResolver<'a> {
@@ -111,13 +111,13 @@ impl<'a> TypeResolver<'a> {
         }
     }
 
-    fn handle_assign(&mut self, id: i64, binding_ir: &BindingIR) {
+    fn handle_assign(&mut self, id: i64, binding_ir: &BindingIR, flow_env: &mut FlowEnv) {
         let target_ref = SymbolRef {
             program_id: id,
             symbol_id: binding_ir.target_id
         };
 
-        let value = match &binding_ir.value {
+        let value_type = match &binding_ir.value {
             Some(value) => self.infer_expr_type(value),
             _other_none => {
                 self.diagnostics.push(Diagnostic { 
@@ -132,6 +132,8 @@ impl<'a> TypeResolver<'a> {
                 Type::Unknown
             }
         };
+
+        flow_env.by_ref.insert(target_ref, FlowValue::Bound(value_type));
     }
 
     fn handle_annassign(&mut self, id: i64, binding_ir: &BindingIR, flow_env: &mut FlowEnv) {

@@ -512,7 +512,7 @@ class SemanticBuilder(ast.NodeVisitor):
             if isinstance(node.value, str):
                 return StringIR(node.value)
 
-            # TODO change this, not the right way to go
+            # TODO double check
             if node.value is None:
                 return NoneIR()
 
