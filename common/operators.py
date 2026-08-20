@@ -57,6 +57,8 @@ class Operator(IntEnum):
     OP_BITXOR_ASSIGN = 41
     OP_BITAND_ASSIGN = 42
 
+    OP_WALRUS = 43  # := new in Python, unsure what to do with this thing yet
+
     @staticmethod
     def binop_to_operator(binop: ast.operator) -> "Operator":
         mapping = {

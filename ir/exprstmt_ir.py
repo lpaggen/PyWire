@@ -11,7 +11,7 @@ class ExprStmtIR(StmtIR):
         self.value = value
 
     def to_proto(self):
-        proto = _pb2.ReturnIR()
+        proto = _pb2.ExprStmtIR()
 
         if self.value is not None:
             proto.value.CopyFrom(self.value.to_proto())
@@ -20,5 +20,5 @@ class ExprStmtIR(StmtIR):
             proto.span.CopyFrom(self.span.to_proto())
 
         stmt = _pb2.StmtIR()
-        stmt.return_stmt.CopyFrom(proto)
+        stmt.expr_stmt.CopyFrom(proto)
         return stmt

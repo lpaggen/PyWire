@@ -6,6 +6,7 @@ from ir.binding_ir import BindingIR
 from ir.function_ir import FunctionIR, ReturnIR
 from ir.if_ir import IfIR
 from ir.import_ir import ImportIR
+from ir.match_ir import MatchIR
 
 
 def build(source: str):
@@ -86,6 +87,30 @@ if condition:
         self.assertEqual(
             [statement.WhichOneof("kind") for statement in program.to_proto().body],
             ["binding", "binding"],
+        )
+
+    def test_match_with_ellipsis_body_serializes_to_protobuf(self):
+        program = build(
+            """
+match value:
+    case [item] as matched:
+        ...
+    case _:
+        ...
+"""
+        )
+
+        self.assertIsInstance(program.body[0], MatchIR)
+
+        match_proto = program.to_proto().body[0]
+        self.assertEqual(match_proto.WhichOneof("kind"), "match")
+        self.assertEqual(
+            match_proto.match.cases[0].body[0].WhichOneof("kind"),
+            "expr_stmt",
+        )
+        self.assertEqual(
+            match_proto.match.cases[0].body[0].expr_stmt.value.WhichOneof("kind"),
+            "ellipsis",
         )
 
 

@@ -95,6 +95,7 @@ message StmtIR {
     ImportIR import_stmt = 8;
     FunctionIR function = 9;
     ClassIR class_decl = 10;
+    MatchIR match = 11;
   }
 }
 
@@ -199,6 +200,96 @@ message ClassIR {
   optional SourceSpan span = 9;
 }
 
+message PatternIR {
+  oneof kind {
+    ValuePatternIR value_pattern = 1;
+    SingletonPatternIR singleton_pattern = 2;
+    SequencePatternIR sequence_pattern = 3;
+    MappingPatternIR mapping_pattern = 4;
+    ClassPatternIR class_pattern = 5;
+    StarPatternIR star_pattern = 6;
+    CapturePatternIR capture_pattern = 7;
+    WildcardPatternIR wildcard_pattern = 8;
+    AsPatternIR as_pattern = 9;
+    OrPatternIR or_pattern = 10;
+  }
+}
+
+message ValuePatternIR {
+  ExprIR value = 1;
+  SourceSpan span = 2;
+}
+
+enum SingletonValue {
+  SINGLETON_VALUE_UNSPECIFIED = 0;
+  SINGLETON_NONE = 1;
+  SINGLETON_TRUE = 2;
+  SINGLETON_FALSE = 3;
+}
+
+message SingletonPatternIR {
+  SingletonValue value = 1;
+  SourceSpan span = 2;
+}
+
+message SequencePatternIR {
+  repeated PatternIR patterns = 1;
+  SourceSpan span = 2;
+}
+
+message MappingPatternIR {
+  repeated ExprIR keys = 1;
+  repeated PatternIR patterns = 2;
+  optional string rest = 3;
+  SourceSpan span = 4;
+}
+
+message ClassPatternIR {
+  ExprIR cls = 1;
+  repeated PatternIR positional_patterns = 2;
+  repeated string keyword_names = 3;
+  repeated PatternIR keyword_patterns = 4;
+  SourceSpan span = 5;
+}
+
+message StarPatternIR {
+  optional string name = 1;
+  SourceSpan span = 2;
+}
+
+message CapturePatternIR {
+  string name = 1;
+  SourceSpan span = 2;
+}
+
+message WildcardPatternIR {
+  SourceSpan span = 1;
+}
+
+message AsPatternIR {
+  PatternIR pattern = 1;
+  string name = 2;
+  SourceSpan span = 3;
+}
+
+message OrPatternIR {
+  repeated PatternIR patterns = 1;
+  SourceSpan span = 2;
+}
+
+message MatchIR {
+  ExprIR subject = 1;
+  repeated MatchCaseIR cases = 2;
+  SourceSpan span = 3;
+}
+
+message MatchCaseIR {
+  PatternIR pattern = 1;
+  optional ExprIR guard = 2;
+  repeated StmtIR body = 3;
+  SourceSpan span = 4;
+}
+
 message ExprIR {
   oneof kind {
     IdentifierIR identifier = 1;
@@ -217,6 +308,7 @@ message ExprIR {
     CompareIR compare = 14;
     SubscriptIR subscript = 15;
     SliceIR slice = 16;
+    EllipsisIR ellipsis = 17;
   }
 }
 
@@ -247,6 +339,10 @@ message BooleanIR {
 }
 
 message NoneIR {
+  optional SourceSpan span = 1;
+}
+
+message EllipsisIR {
   optional SourceSpan span = 1;
 }
 
@@ -405,4 +501,5 @@ enum Operator {
   OP_BITOR_ASSIGN = 40;
   OP_BITXOR_ASSIGN = 41;
   OP_BITAND_ASSIGN = 42;
+  OP_WALRUS = 43;
 }

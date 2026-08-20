@@ -643,7 +643,9 @@ class SemanticBuilder(ast.NodeVisitor):
                 return StringIR(node.value)
 
             if node.value is Ellipsis:
-                return EllipsisIR()
+                return EllipsisIR(
+                    span=SourceSpan.span(node, self.file_path),
+                )
 
             # TODO double check
             if node.value is None:
