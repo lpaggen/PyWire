@@ -5,7 +5,7 @@ use crate::linker::import_graph::ImportGraph;
 use crate::linker::program_table::ProgramTable;
 use crate::linker::resolution_table::ResolutionTable;
 use crate::type_resolver::symbol_type_table::SymbolTypeTable;
-use crate::type_resolver::type_resolver::TypeResolver;
+// use crate::type_resolver::type_resolver::TypeResolver;
 use crate::pb_decoder::pb_decoder::PBDecoder;
 
 
@@ -48,8 +48,8 @@ fn main() -> Result<(), Vec<Diagnostic>> {
     //     println!("{:?}, {:?}", symbol_ref, symbol_type)
     // }
 
-    let mut resolver: TypeResolver = TypeResolver::new(&table, &types);
-    resolver.resolve_types();
+    // let mut resolver: TypeResolver = TypeResolver::new(&table, &types);
+    // resolver.resolve_types();
 
     // for (id, program) in table.by_id {
     //     resolver.infer_statements(progr, env, program_id);

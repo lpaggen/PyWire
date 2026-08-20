@@ -2,13 +2,17 @@ use std::fs;
 use std::io;
 use std::os::unix::thread;
 use std::path::PathBuf;
+use std::println;
+use std::todo;
 
 use crate::ir::nodes::annotation_ir::AnnotationHeadIR;
+use crate::ir::nodes::match_ir::MatchCaseIR;
 use crate::ir::nodes::scope_ir::ScopeIR;
 use crate::ir::nodes::symbol_ir::SymbolIR;
 use crate::ir::nodes::*;
 use crate::ir::{expr_ir::ExprIR, operator::Operator, span_ir::SourceSpan, stmt_ir::StmtIR};
 use crate::pb;
+use crate::pb::EllipsisIr;
 
 use prost::Message;
 
@@ -337,8 +341,68 @@ impl PBDecoder {
         })
     }
 
+    fn convert_pattern(pattern: &pb::PatternIr) -> Result<PatternIR, Box<dyn std::error::Error>> {
+        todo!()
+    }
+
+    fn convert_match_case(case: &pb::MatchCaseIr) -> Result<MatchCaseIR, Box<dyn std::error::Error>> {
+        let mut body: Vec<StmtIR> = Vec::new();
+
+        for stmt in &case.body {
+            let stmt_ir = Self::convert_stmt(stmt)?;
+            body.push(stmt_ir);
+        }
+
+        let span = match &case.span {
+            Some(span) => Some(Self::convert_span(span)),
+            None => None,
+        };
+
+        let guard = match &case.guard {
+            Some(guard) => Some(Self::convert_expr(guard)?),
+            None => None,
+        };
+
+        let pattern = match &case.pattern {
+            Some(pattern) => Self::convert_pattern(pattern)?,
+            None => return Err("case has no pattern".into()),
+        };
+
+        Ok(MatchCaseIR {
+            pattern,
+            guard,
+            body, 
+            span,
+        })
+    }
+
     fn convert_stmt(stmt: &pb::StmtIr) -> Result<StmtIR, Box<dyn std::error::Error>> {
         match &stmt.kind {
+            Some(pb::stmt_ir::Kind::Match(match_ir)) => {
+                let mut cases: Vec<MatchCaseIR> = Vec::new();
+
+                for case in &match_ir.cases {
+                    let case_ir = Self::convert_match_case(case)?;
+                    cases.push(case_ir);
+                }
+
+                let span = match &match_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                let subject = match &match_ir.subject {
+                    Some(subject) => Box::new(Self::convert_expr(subject)?),
+                    None => return Err("match statement has no subject".into()),
+                };
+
+                Ok(StmtIR::Match(MatchIR { 
+                    subject,
+                    cases,
+                    span,
+                }))
+            },
+
             Some(pb::stmt_ir::Kind::Binding(binding)) => Ok(StmtIR::Binding(BindingIR {
                 id: binding.id,
                 target_id: binding.target_id,
@@ -583,6 +647,13 @@ impl PBDecoder {
                     },
                 }))
             }
+
+            Some(pb::expr_ir::Kind::Ellipsis(ellipsis)) => Ok(ExprIR::EllipsisExpr(
+                EllipsisIR { span: match &ellipsis.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None
+                }
+            })),
 
             Some(pb::expr_ir::Kind::Integer(integer)) => Ok(ExprIR::IntegerExpr(IntegerIR {
                 value: integer.value,

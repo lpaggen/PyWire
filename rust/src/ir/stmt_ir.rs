@@ -1,4 +1,4 @@
-use crate::ir::nodes::*;
+use crate::ir::nodes::{match_ir::MatchCaseIR, *};
 
 #[derive(Debug, Clone)]
 pub enum StmtIR {
@@ -12,4 +12,5 @@ pub enum StmtIR {
     Class(ClassIR),
     Import(ImportIR),
     Return(ReturnIR),
+    Match(MatchIR),
 }

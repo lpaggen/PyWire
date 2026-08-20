@@ -1,4 +1,4 @@
-use crate::{diagnostic::diagnostic::Diagnostic, ir::stmt_ir::StmtIR, type_resolver::type_resolver::TypeResolver};
+use crate::{diagnostic::diagnostic::Diagnostic, ir::stmt_ir::StmtIR};
 
 
 

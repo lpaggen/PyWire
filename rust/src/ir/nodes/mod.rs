@@ -29,7 +29,12 @@ pub mod tuple_ir;
 pub mod unaryop_ir;
 pub mod whileloop_ir;
 pub mod pattern_ir;
+pub mod ellipsis_ir;
+pub mod match_ir;
 
+
+pub use match_ir::{MatchIR};
+pub use ellipsis_ir::EllipsisIR;
 pub use pattern_ir::{PatternIR};
 pub use annotation_ir::AnnotationIR;
 pub use binop_ir::BinOpIR;
