@@ -7,12 +7,7 @@ from typing import List
 
 
 class MatchIR(StmtIR):
-    def __init__(
-        self,
-        subject: ExprIR,
-        cases: List["MatchCaseIR"],
-        span: SourceSpan
-    ):
+    def __init__(self, subject: ExprIR, cases: List["MatchCaseIR"], span: SourceSpan):
         super().__init__(span=span)
         self.subject = subject
         self.cases = cases
@@ -24,7 +19,7 @@ class MatchCaseIR(StmtIR):
         pattern: PatternIR,
         guard: ExprIR | None,
         body: List[StmtIR],
-        span: SourceSpan
+        span: SourceSpan,
     ):
         super().__init__(span=span)
         self.pattern = pattern

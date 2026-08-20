@@ -6,7 +6,9 @@ from generated import _pb2
 
 
 class AugAssignIR(StmtIR):
-    def __init__(self, target: str, op: Operator, value=ExprIR, span: SourceSpan = None):
+    def __init__(
+        self, target: str, op: Operator, value=ExprIR, span: SourceSpan = None
+    ):
         super().__init__(span=span)
         self.span = span
         self.target = target
@@ -14,9 +16,7 @@ class AugAssignIR(StmtIR):
         self.value = value
 
     def to_proto(self):
-        proto = _pb2.AugAssignIR(
-            op=self.op.value
-        )
+        proto = _pb2.AugAssignIR(op=self.op.value)
 
         proto.target.CopyFrom(self.target.to_proto())
         proto.value.CopyFrom(self.value.to_proto())

@@ -13,6 +13,4 @@ class BooleanIR(IRNode):
         return "true" if self.value is True else "false"
 
     def to_proto(self):
-        return _pb2.ExprIR(
-            bool_lit=_pb2.BooleanIR(value=self.value)
-        )
+        return _pb2.ExprIR(bool_lit=_pb2.BooleanIR(value=self.value))

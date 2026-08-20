@@ -5,8 +5,10 @@ in_features: int
 hidden: int
 out_features: int
 
+
 def fn(a: Optional[t.Tensor], b: int) -> int:
     return a + b
+
 
 X: t.Tensor[batch, in_features]
 

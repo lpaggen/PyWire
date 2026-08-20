@@ -5,7 +5,7 @@ from generated import _pb2
 
 
 class TupleIR(ExprIR):
-    def __init__(self, elements: tuple[ExprIR], span: SourceSpan=None):
+    def __init__(self, elements: tuple[ExprIR], span: SourceSpan = None):
         super().__init__(span=span, value=None)
         self.span = span
         self.elements = elements
@@ -16,9 +16,7 @@ class TupleIR(ExprIR):
     def to_proto(self):
         tuple_proto = _pb2.TupleIR()
 
-        tuple_proto.elements.extend([
-            element.to_proto() for element in self.elements
-        ])
+        tuple_proto.elements.extend([element.to_proto() for element in self.elements])
 
         if self.span is not None:
             tuple_proto.span.CopyFrom(self.span.to_proto())

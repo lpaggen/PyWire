@@ -19,10 +19,10 @@ def parse_args() -> argparse.Namespace:
         help="Python files or directories to analyze",
     )
     parser.add_argument(
-    "-o",
-    "--output",
-    default="ir_out",
-    help="Output directory for generated IR files",
+        "-o",
+        "--output",
+        default="ir_out",
+        help="Output directory for generated IR files",
     )
     return parser.parse_args()
 

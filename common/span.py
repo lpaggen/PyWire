@@ -30,4 +30,3 @@ class SourceSpan:
             end_line=self.end_line or 0,
             end_col=self.end_col or 0,
         )
-

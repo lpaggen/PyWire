@@ -39,6 +39,7 @@ class ParamIR(IRNode):
 
         return proto
 
+
 class ReturnIR(StmtIR):
     def __init__(self, value: ExprIR, span: SourceSpan):
         super().__init__(span=span)

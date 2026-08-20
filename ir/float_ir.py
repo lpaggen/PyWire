@@ -13,6 +13,4 @@ class FloatIR(ExprIR):
         return str(self.value)
 
     def to_proto(self):
-        return _pb2.ExprIR(
-            float_lit=_pb2.FloatIR(value=self.value)
-        )
+        return _pb2.ExprIR(float_lit=_pb2.FloatIR(value=self.value))

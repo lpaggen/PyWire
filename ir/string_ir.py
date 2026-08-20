@@ -11,6 +11,4 @@ class StringIR(ExprIR):
         return self.value
 
     def to_proto(self):
-        return _pb2.ExprIR(
-            string_lit=_pb2.StringIR(value=self.value)
-        )
+        return _pb2.ExprIR(string_lit=_pb2.StringIR(value=self.value))

@@ -14,7 +14,7 @@ class ForLoopIR(StmtIR):
         body_scope_id: int,
         body: List[IRNode],
         orelse: List[IRNode],
-        span: SourceSpan=None,
+        span: SourceSpan = None,
     ):
         super().__init__(span)
         self.target = target

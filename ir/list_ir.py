@@ -4,7 +4,7 @@ from generated import _pb2
 
 
 class ListIR(ExprIR):
-    def __init__(self, elements: list[ExprIR], span: SourceSpan=None):
+    def __init__(self, elements: list[ExprIR], span: SourceSpan = None):
         super().__init__(span=span, value=None)
         self.span = span
         self.elements = elements
@@ -15,9 +15,7 @@ class ListIR(ExprIR):
     def to_proto(self):
         proto = _pb2.ListIR()
 
-        proto.elements.extend([
-            i.to_proto() for i in self.elements
-        ])
+        proto.elements.extend([i.to_proto() for i in self.elements])
 
         if self.span is not None:
             proto.span.CopyFrom(self.span.to_proto())

@@ -72,10 +72,7 @@ if condition:
             ["import_stmt", "function"],
         )
         self.assertEqual(
-            [
-                statement.WhichOneof("kind")
-                for statement in branch[1].function.body
-            ],
+            [statement.WhichOneof("kind") for statement in branch[1].function.body],
             ["binding", "return_stmt"],
         )
 

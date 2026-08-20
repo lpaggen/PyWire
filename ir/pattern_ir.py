@@ -17,6 +17,7 @@ class ValuePatternIR(PatternIR):
     case "foo"
     case Color.RED
     """
+
     def __init__(
         self,
         value: ExprIR,
@@ -32,6 +33,7 @@ class SingletonPatternIR(PatternIR):
     case True
     case False
     """
+
     def __init__(
         self,
         value: None | bool,
@@ -47,6 +49,7 @@ class SequencePatternIR(PatternIR):
     case (a, b)
     case [head, *rest]
     """
+
     def __init__(
         self,
         patterns: list[PatternIR],
@@ -62,6 +65,7 @@ class MappingPatternIR(PatternIR):
     case {"x": x, "y": y}
     case {"x": x, **rest}
     """
+
     def __init__(
         self,
         keys: list[ExprIR],
@@ -80,6 +84,7 @@ class ClassPatternIR(PatternIR):
     case Point(x, y)
     case Point(x=x, y=y)
     """
+
     def __init__(
         self,
         cls: ExprIR,
@@ -102,6 +107,7 @@ class StarPatternIR(PatternIR):
 
     Only appears inside sequence patterns.
     """
+
     def __init__(
         self,
         name: str | None,
@@ -115,6 +121,7 @@ class CapturePatternIR(PatternIR):
     """
     case x
     """
+
     def __init__(
         self,
         name: str,
@@ -128,6 +135,7 @@ class WildcardPatternIR(PatternIR):
     """
     case _
     """
+
     def __init__(
         self,
         span: SourceSpan,
@@ -140,6 +148,7 @@ class AsPatternIR(PatternIR):
     case [x, y] as point
     case (1 | 2) as value
     """
+
     def __init__(
         self,
         pattern: PatternIR,
@@ -156,6 +165,7 @@ class OrPatternIR(PatternIR):
     case 1 | 2
     case "yes" | "y"
     """
+
     def __init__(
         self,
         patterns: list[PatternIR],

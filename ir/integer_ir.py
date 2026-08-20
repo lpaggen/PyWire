@@ -13,6 +13,4 @@ class IntegerIR(ExprIR):
         return str(self.value)
 
     def to_proto(self):
-        return _pb2.ExprIR(
-            integer=_pb2.IntegerIR(value=self.value)
-        )
+        return _pb2.ExprIR(integer=_pb2.IntegerIR(value=self.value))
