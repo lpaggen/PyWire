@@ -331,7 +331,7 @@ class SemanticBuilder(ast.NodeVisitor):
         cases = [
             MatchCaseIR(
                 pattern=self.parse_pattern(case.pattern),
-                guard=self.parse_expr(case.guard),
+                guard=self.parse_expr(case.guard) if case.guard is not None else None,
                 body=self.lower_statements(case.body),
                 span=SourceSpan.span(node, self.file_path)
             )
