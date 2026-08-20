@@ -8,6 +8,204 @@ M: int = 128
 K: int = 64
 N: int = 32
 
+x = 5
+
+match x:
+    case [x] as y:
+        ...
+    case _:
+        ...
+
+
+# from enum import Enum
+
+
+# class Color(Enum):
+#     RED = 1
+#     BLUE = 2
+
+
+# class Point:
+#     __match_args__ = ("x", "y")
+
+#     def __init__(self, x, y):
+#         self.x = x
+#         self.y = y
+
+
+# def test_patterns(a):
+
+#     # ---------------------------------------------------------
+#     # ValuePatternIR
+#     # SingletonPatternIR
+#     # OrPatternIR
+#     # ---------------------------------------------------------
+#     match a:
+#         # ValuePatternIR
+#         case 1:
+#             pass
+
+#         # ValuePatternIR
+#         case "foo":
+#             pass
+
+#         # ValuePatternIR - dotted value
+#         case Color.RED:
+#             pass
+
+#         # SingletonPatternIR
+#         case None:
+#             pass
+
+#         # SingletonPatternIR
+#         case True:
+#             pass
+
+#         # SingletonPatternIR
+#         case False:
+#             pass
+
+#         # OrPatternIR containing ValuePatternIR nodes
+#         case 2 | 3:
+#             pass
+
+#         # OrPatternIR
+#         case "yes" | "y":
+#             pass
+
+#         case _:
+#             pass
+
+
+#     # ---------------------------------------------------------
+#     # SequencePatternIR
+#     # StarPatternIR
+#     # CapturePatternIR nested inside sequences
+#     # WildcardPatternIR nested inside sequences
+#     # ---------------------------------------------------------
+#     match a:
+
+#         # SequencePatternIR
+#         #   CapturePatternIR("x")
+#         #   CapturePatternIR("y")
+#         case [x, y]:
+#             pass
+
+#         # SequencePatternIR using tuple syntax
+#         case (x, y, z):
+#             pass
+
+#         # SequencePatternIR
+#         #   CapturePatternIR("head")
+#         #   StarPatternIR("rest")
+#         case [head, *rest]:
+#             pass
+
+#         # StarPatternIR(name=None)
+#         case [head, *_, tail]:
+#             pass
+
+#         # WildcardPatternIR nested in sequence
+#         case [x, _, y]:
+#             pass
+
+#         case _:
+#             pass
+
+
+#     # ---------------------------------------------------------
+#     # MappingPatternIR
+#     # ---------------------------------------------------------
+#     match a:
+
+#         # MappingPatternIR
+#         case {"x": x}:
+#             pass
+
+#         # MappingPatternIR with multiple keys
+#         case {"x": x, "y": y}:
+#             pass
+
+#         # MappingPatternIR with rest
+#         case {"x": x, **rest}:
+#             pass
+
+#         # Nested patterns inside mapping
+#         case {"point": [x, y]}:
+#             pass
+
+#         case _:
+#             pass
+
+
+#     # ---------------------------------------------------------
+#     # ClassPatternIR
+#     # ---------------------------------------------------------
+#     match a:
+
+#         # positional_patterns
+#         case Point(x, y):
+#             pass
+
+#         # keyword_names / keyword_patterns
+#         case Point(x=x, y=y):
+#             pass
+
+#         # Both positional and keyword patterns
+#         #
+#         # Would require a class with >=3 matchable attributes,
+#         # so omitted for Point(x, y).
+
+#         case _:
+#             pass
+
+
+#     # ---------------------------------------------------------
+#     # AsPatternIR
+#     # ---------------------------------------------------------
+#     match a:
+
+#         # AsPatternIR(
+#         #     SequencePatternIR(...),
+#         #     name="point"
+#         # )
+#         case [x, y] as point:
+#             pass
+
+#         # AsPatternIR(
+#         #     OrPatternIR(...),
+#         #     name="value"
+#         # )
+#         case (1 | 2) as value:
+#             pass
+
+#         # Nested class + as pattern
+#         case Point(x, y) as point_obj:
+#             pass
+
+#         case _:
+#             pass
+
+
+#     # ---------------------------------------------------------
+#     # CapturePatternIR
+#     #
+#     # MUST be last because it matches absolutely anything.
+#     # ---------------------------------------------------------
+#     match a:
+#         case captured:
+#             pass
+
+
+#     # ---------------------------------------------------------
+#     # WildcardPatternIR
+#     #
+#     # Also MUST be last because it matches absolutely anything.
+#     # ---------------------------------------------------------
+#     match a:
+#         case _:
+#             pass
+
 class CustomCompilerTestLayer(nn.Module):
     """
     A structurally complex layer designed to stress-test compiler optimizations

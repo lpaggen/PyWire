@@ -1,6 +1,5 @@
 import ast
 from .ir_builder import IRBuilder
-from ir.import_ir import ImportIR
 from ir.program_ir import ProgramIR
 from common.span import SourceSpan
 from ir.annotation_ir import AnnotationIR, AnnotationHeadIR
@@ -27,7 +26,11 @@ from ir.integer_ir import IntegerIR
 from ir.float_ir import FloatIR
 from ir.string_ir import StringIR
 from ir.binop_ir import BinOpIR
+from ir.ellipsis_ir import EllipsisIR
 from common.kind import ScopeKind, SymbolKind, BindingKind, ImportKind
+from ir.pattern_ir import AsPatternIR, OrPatternIR, StarPatternIR, ClassPatternIR, ValuePatternIR, CapturePatternIR, MappingPatternIR, SequencePatternIR, WildcardPatternIR, SingletonPatternIR
+from ir.match_ir import MatchIR, MatchCaseIR
+from ir.pattern_ir import PatternIR
 
 
 class SemanticBuilder(ast.NodeVisitor):
@@ -323,6 +326,133 @@ class SemanticBuilder(ast.NodeVisitor):
             span=SourceSpan.span(node, self.file_path),
         )
 
+    def visit_Match(self, node: ast.Match) -> MatchIR:
+        subject = self.parse_expr(node.subject)
+        cases = [
+            MatchCaseIR(
+                pattern=self.parse_pattern(case.pattern),
+                guard=self.parse_expr(case.guard),
+                body=self.lower_statements(case.body),
+                span=SourceSpan.span(node, self.file_path)
+            )
+            for case in node.cases
+        ]
+
+        return MatchIR(
+            subject=subject,
+            cases=cases,
+            span=SourceSpan.span(node, self.file_path)
+        )
+
+    def parse_pattern(self, pattern: ast.pattern) -> PatternIR:
+        span = SourceSpan.span(pattern, self.file_path)
+
+        match pattern:
+            case ast.MatchValue(value=value):
+                return ValuePatternIR(
+                    value=self.parse_expr(value),
+                    span=span,
+                )
+
+            case ast.MatchSingleton(value=value):
+                return SingletonPatternIR(
+                    value=value,
+                    span=span,
+                )
+
+            case ast.MatchSequence(patterns=patterns):
+                return SequencePatternIR(
+                    patterns=[
+                        self.parse_pattern(p)
+                        for p in patterns
+                    ],
+                    span=span,
+                )
+
+            case ast.MatchMapping(
+                keys=keys,
+                patterns=patterns,
+                rest=rest,
+            ):
+                return MappingPatternIR(
+                    keys=[
+                        self.parse_expr(key)
+                        for key in keys
+                    ],
+                    patterns=[
+                        self.parse_pattern(p)
+                        for p in patterns
+                    ],
+                    rest=rest,
+                    span=span,
+                )
+
+            case ast.MatchClass(
+                cls=cls,
+                patterns=patterns,
+                kwd_attrs=kwd_names,
+                kwd_patterns=kwd_patterns,
+            ):
+                return ClassPatternIR(
+                    cls=self.parse_expr(cls),
+                    positional_patterns=[
+                        self.parse_pattern(p)
+                        for p in patterns
+                    ],
+                    keyword_names=kwd_names,
+                    keyword_patterns=[
+                        self.parse_pattern(p)
+                        for p in kwd_patterns
+                    ],
+                    span=span,
+                )
+
+            case ast.MatchStar(name=name):
+                return StarPatternIR(
+                    name=name,
+                    span=span,
+                )
+
+            case ast.MatchAs(
+                pattern=inner_pattern,
+                name=name,
+            ):
+                if inner_pattern is None and name is not None:
+                    return CapturePatternIR(
+                        name=name,
+                        span=span,
+                    )
+
+                if inner_pattern is None and name is None:
+                    return WildcardPatternIR(
+                        span=span,
+                    )
+
+                if inner_pattern is not None and name is not None:
+                    return AsPatternIR(
+                        pattern=self.parse_pattern(inner_pattern),
+                        name=name,
+                        span=span,
+                    )
+
+                raise ValueError(
+                    f"Unexpected MatchAs: {ast.dump(pattern)}"
+                )
+
+            case ast.MatchOr(patterns=patterns):
+                return OrPatternIR(
+                    patterns=[
+                        self.parse_pattern(p)
+                        for p in patterns
+                    ],
+                    span=span,
+                )
+
+            case _:
+                raise NotImplementedError(
+                    f"Unsupported pattern: {ast.dump(pattern)}"
+                )
+
     def visit_If(self, node: ast.If):
         parent_scope = self.current_scope()
 
@@ -511,6 +641,9 @@ class SemanticBuilder(ast.NodeVisitor):
 
             if isinstance(node.value, str):
                 return StringIR(node.value)
+
+            if node.value is Ellipsis:
+                return EllipsisIR()
 
             # TODO double check
             if node.value is None:

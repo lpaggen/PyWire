@@ -2,7 +2,7 @@ from ir.scope_ir import ScopeIR
 from ir.symbol_ir import SymbolIR
 from ir.program_ir import ProgramIR
 from ir.import_ir import ImportIR
-from typing import Optional
+from ir.expr_ir import ExprIR
 
 from common.span import SourceSpan
 
