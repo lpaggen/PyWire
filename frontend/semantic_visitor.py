@@ -1,4 +1,9 @@
 import ast
+
+from ir.bytes_ir import BytesIR
+from ir.complex_ir import ComplexIR
+from ir.dict_ir import DictIR
+from ir.set_ir import SetIR
 from .ir_builder import IRBuilder
 from ir.program_ir import ProgramIR
 from common.span import SourceSpan
@@ -652,6 +657,18 @@ class SemanticBuilder(ast.NodeVisitor):
             if isinstance(node.value, str):
                 return StringIR(node.value)
 
+            if isinstance(node.value, bytes):
+                return BytesIR(
+                    value=node.value,
+                    span=SourceSpan.span(node, self.file_path),
+                )
+
+            if isinstance(node.value, complex):
+                return ComplexIR(
+                    value=node.value,
+                    span=SourceSpan.span(node, self.file_path),
+                )
+
             if node.value is Ellipsis:
                 return EllipsisIR(
                     span=SourceSpan.span(node, self.file_path),
@@ -667,6 +684,25 @@ class SemanticBuilder(ast.NodeVisitor):
             return IdentifierIR(
                 name=node.id,
                 use_scope_id=self.current_scope(),
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.Set):
+            return SetIR(
+                elements=[self.parse_expr(element) for element in node.elts],
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.Dict):
+            return DictIR(
+                keys=[
+                    self.parse_expr(key) if key is not None else None
+                    for key in node.keys
+                ],
+                values=[
+                    self.parse_expr(value)
+                    for value in node.values
+                ],
                 span=SourceSpan.span(node, self.file_path),
             )
 
