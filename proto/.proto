@@ -278,16 +278,17 @@ message OrPatternIR {
 }
 
 message MatchIR {
-  ExprIR subject = 1;
-  repeated MatchCaseIR cases = 2;
-  SourceSpan span = 3;
+  ExprIR subject = 2;
+  repeated MatchCaseIR cases = 3;
+  SourceSpan span = 4;
 }
 
 message MatchCaseIR {
-  PatternIR pattern = 1;
-  optional ExprIR guard = 2;
-  repeated StmtIR body = 3;
-  SourceSpan span = 4;
+  int64 scope_id = 1;
+  PatternIR pattern = 2;
+  optional ExprIR guard = 3;
+  repeated StmtIR body = 4;
+  SourceSpan span = 5;
 }
 
 message ExprIR {

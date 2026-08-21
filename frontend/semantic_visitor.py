@@ -328,15 +328,25 @@ class SemanticBuilder(ast.NodeVisitor):
 
     def visit_Match(self, node: ast.Match) -> MatchIR:
         subject = self.parse_expr(node.subject)
-        cases = [
-            MatchCaseIR(
-                pattern=self.parse_pattern(case.pattern),
-                guard=self.parse_expr(case.guard) if case.guard is not None else None,
-                body=self.lower_statements(case.body),
+
+        cases = []
+        for case in node.cases:
+            parent_scope_id = self.current_scope()
+            case_scope_id = self.builder.new_scope(
+                name="<case>",
+                kind=ScopeKind.SCOPE_BLOCK,
+                parent_id=parent_scope_id,
                 span=SourceSpan.span(node, self.file_path)
             )
-            for case in node.cases
-        ]
+            cases.append(
+                MatchCaseIR(
+                    scope_id=case_scope_id,
+                    pattern=self.parse_pattern(case.pattern),
+                    guard=self.parse_expr(case.guard) if case.guard is not None else None,
+                    body=self.lower_statements(case.body),
+                    span=SourceSpan.span(node, self.file_path)
+                )
+            )
 
         return MatchIR(
             subject=subject,

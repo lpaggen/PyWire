@@ -11,6 +11,7 @@ pub struct MatchIR {
 
 #[derive(Debug, Clone)]
 pub struct MatchCaseIR {
+    pub scope_id: i64,
     pub pattern: PatternIR,
     pub guard: Option<ExprIR>,
     pub body: Vec<StmtIR>,

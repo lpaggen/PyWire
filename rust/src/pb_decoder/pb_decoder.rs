@@ -520,6 +520,7 @@ impl PBDecoder {
         };
 
         Ok(MatchCaseIR {
+            scope_id: case.scope_id,
             pattern,
             guard,
             body, 

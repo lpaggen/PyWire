@@ -11,7 +11,7 @@ from ir.function_ir import FunctionIR
 from ir.class_ir import ClassIR
 from ir.annotation_ir import AnnotationIR
 
-from common.kind import SymbolKind, ImportKind, BindingKind, ScopeKind
+from common.kind import ScopeKind
 
 
 class IRBuilder:

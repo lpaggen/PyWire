@@ -41,18 +41,20 @@ class MatchIR(StmtIR):
 class MatchCaseIR(StmtIR):
     def __init__(
         self,
+        scope_id: int,
         pattern: PatternIR,
         guard: ExprIR | None,
         body: List[StmtIR],
         span: SourceSpan,
     ):
         super().__init__(span=span)
+        self.scope_id = scope_id
         self.pattern = pattern
         self.guard = guard
         self.body = body
 
     def to_proto(self):
-        proto = _pb2.MatchCaseIR()
+        proto = _pb2.MatchCaseIR(scope_id=self.scope_id)
 
         proto.pattern.CopyFrom(self.pattern.to_proto())
 
