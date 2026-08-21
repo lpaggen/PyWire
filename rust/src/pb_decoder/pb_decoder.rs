@@ -7,6 +7,16 @@ use std::todo;
 
 use crate::ir::nodes::annotation_ir::AnnotationHeadIR;
 use crate::ir::nodes::match_ir::MatchCaseIR;
+use crate::ir::nodes::pattern_ir::AsPatternIR;
+use crate::ir::nodes::pattern_ir::CapturePatternIR;
+use crate::ir::nodes::pattern_ir::ClassPatternIR;
+use crate::ir::nodes::pattern_ir::MappingPatternIR;
+use crate::ir::nodes::pattern_ir::OrPatternIR;
+use crate::ir::nodes::pattern_ir::SequencePatternIR;
+use crate::ir::nodes::pattern_ir::SingletonPatternIR;
+use crate::ir::nodes::pattern_ir::StarPatternIR;
+use crate::ir::nodes::pattern_ir::ValuePatternIR;
+use crate::ir::nodes::pattern_ir::WildcardPatternIR;
 use crate::ir::nodes::scope_ir::ScopeIR;
 use crate::ir::nodes::symbol_ir::SymbolIR;
 use crate::ir::nodes::*;
@@ -342,7 +352,197 @@ impl PBDecoder {
     }
 
     fn convert_pattern(pattern: &pb::PatternIr) -> Result<PatternIR, Box<dyn std::error::Error>> {
-        todo!()
+        match &pattern.kind {
+            Some(pb::pattern_ir::Kind::ValuePattern(valuepattern_ir)) => {
+                let value = match &valuepattern_ir.value {
+                    Some(value) => Self::convert_expr(value)?,
+                    None => return Err("value pattern has no value".into()),
+                };
+
+                let span = match &valuepattern_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(PatternIR::ValuePattern(ValuePatternIR { 
+                    value, 
+                    span 
+                }))  
+            },
+
+            Some(pb::pattern_ir::Kind::AsPattern(aspattern_ir)) => {
+                let inner_pattern = match aspattern_ir.pattern.as_deref() {
+                    Some(pattern) => Self::convert_pattern(pattern)?,
+                    None => return Err("as pattern has no inner pattern".into()),
+                };
+
+                let span = match &aspattern_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(PatternIR::AsPattern(AsPatternIR {
+                    pattern: Box::new(inner_pattern),
+                    name: aspattern_ir.name.clone(),
+                    span,
+                }))
+            },
+
+            Some(pb::pattern_ir::Kind::SequencePattern(sequencepattern_ir)) => {
+                let mut patterns: Vec<PatternIR> = Vec::new();
+
+                for pattern in &sequencepattern_ir.patterns {
+                    let pattern = Self::convert_pattern(pattern)?;
+                    patterns.push(pattern);
+                }
+
+                let span = match &sequencepattern_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(PatternIR::SequencePattern(SequencePatternIR {
+                    patterns,
+                    span,
+                }))
+            },
+
+            Some(pb::pattern_ir::Kind::SingletonPattern(singletonpattern_ir)) => {
+                let value = pb::SingletonValue::try_from(singletonpattern_ir.value)?;
+
+                let value = match value {
+                    pb::SingletonValue::SingletonNone => None,
+                    pb::SingletonValue::SingletonTrue => Some(true),
+                    pb::SingletonValue::SingletonFalse => Some(false),
+
+                    _ => {
+                        return Err("singleton pattern has unspecified value".into());
+                    }
+                };
+
+                let span = match &singletonpattern_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(PatternIR::SingletonPattern(SingletonPatternIR {
+                    value,
+                    span,
+                }))
+            },
+
+            Some(pb::pattern_ir::Kind::MappingPattern(mappingpattern_ir)) => {
+                let mut keys = Vec::new();
+                for key in &mappingpattern_ir.keys {
+                    keys.push(Self::convert_expr(key)?);
+                }
+
+                let mut patterns = Vec::new();
+                for pattern in &mappingpattern_ir.patterns {
+                    patterns.push(Self::convert_pattern(pattern)?);
+                }
+
+                let span = match &mappingpattern_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                let rest = mappingpattern_ir.rest.clone();
+
+                Ok(PatternIR::MappingPattern(MappingPatternIR {
+                    keys,
+                    patterns,
+                    rest,
+                    span,
+                }))
+            },
+
+            Some(pb::pattern_ir::Kind::ClassPattern(classpattern_ir)) => {
+                let cls = match &classpattern_ir.cls {
+                    Some(cls) => Self::convert_expr(cls)?,
+                    None => return Err("class pattern has no class expression".into()),
+                };
+
+                let mut positional_patterns = Vec::new();
+                for pattern in &classpattern_ir.positional_patterns {
+                    positional_patterns.push(Self::convert_pattern(pattern)?);
+                }
+
+                let mut keyword_patterns = Vec::new();
+                for pattern in &classpattern_ir.keyword_patterns {
+                    keyword_patterns.push(Self::convert_pattern(pattern)?);
+                }
+
+                let span = match &classpattern_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(PatternIR::ClassPattern(ClassPatternIR {
+                    cls,
+                    positional_patterns,
+                    keyword_names: classpattern_ir.keyword_names.clone(),
+                    keyword_patterns,
+                    span,
+                }))
+            },
+
+            Some(pb::pattern_ir::Kind::StarPattern(starpattern_ir)) => {
+                let span = match &starpattern_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(PatternIR::StarPattern(StarPatternIR {
+                    name: starpattern_ir.name.clone(),
+                    span,
+                }))
+            },
+
+            Some(pb::pattern_ir::Kind::CapturePattern(capturepattern_ir)) => {
+                let span = match &capturepattern_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(PatternIR::CapturePattern(CapturePatternIR {
+                    name: capturepattern_ir.name.clone(),
+                    span,
+                }))
+            },
+
+            Some(pb::pattern_ir::Kind::WildcardPattern(wildcardpattern_ir)) => {
+                let span = match &wildcardpattern_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(PatternIR::WildcardPattern(WildcardPatternIR {
+                    span,
+                }))
+            },
+
+            Some(pb::pattern_ir::Kind::OrPattern(orpattern_ir)) => {
+                let mut patterns = Vec::new();
+
+                for pattern in &orpattern_ir.patterns {
+                    patterns.push(Self::convert_pattern(pattern)?);
+                }
+
+                let span = match &orpattern_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(PatternIR::OrPattern(OrPatternIR {
+                    patterns,
+                    span,
+                }))
+            },
+
+            None => Err("pattern has no kind".into()),
+
+        }
     }
 
     fn convert_match_case(case: &pb::MatchCaseIr) -> Result<MatchCaseIR, Box<dyn std::error::Error>> {
