@@ -2,8 +2,9 @@ import ast
 
 from ir.bytes_ir import BytesIR
 from ir.complex_ir import ComplexIR
-from ir.dict_ir import DictIR
+from ir.dict_ir import DictEntryIR, DictIR
 from ir.set_ir import SetIR
+from ir.ternary_ir import IfExprIR
 from .ir_builder import IRBuilder
 from ir.program_ir import ProgramIR
 from common.span import SourceSpan
@@ -680,6 +681,14 @@ class SemanticBuilder(ast.NodeVisitor):
 
             raise NotImplementedError(f"Unsupported constant: {node.value!r}")
 
+        if isinstance(node, ast.IfExp):
+            return IfExprIR(
+                test=self.parse_expr(node.test),
+                body=self.parse_expr(node.body),
+                orelse=self.parse_expr(node.orelse),
+                span=SourceSpan.span(node, self.file_path),
+            )
+
         if isinstance(node, ast.Name):
             return IdentifierIR(
                 name=node.id,
@@ -695,13 +704,13 @@ class SemanticBuilder(ast.NodeVisitor):
 
         if isinstance(node, ast.Dict):
             return DictIR(
-                keys=[
-                    self.parse_expr(key) if key is not None else None
-                    for key in node.keys
-                ],
-                values=[
-                    self.parse_expr(value)
-                    for value in node.values
+                entries=[
+                    DictEntryIR(
+                        key=self.parse_expr(key) if key is not None else None,
+                        value=self.parse_expr(value),
+                        span=SourceSpan.span(value, self.file_path),
+                    )
+                    for key, value in zip(node.keys, node.values)
                 ],
                 span=SourceSpan.span(node, self.file_path),
             )

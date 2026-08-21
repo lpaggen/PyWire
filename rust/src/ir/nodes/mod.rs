@@ -31,11 +31,16 @@ pub mod whileloop_ir;
 pub mod pattern_ir;
 pub mod ellipsis_ir;
 pub mod match_ir;
+pub mod ternary_ir;
+pub mod set_ir;
+pub mod dict_ir;
 
-
-pub use match_ir::{MatchIR};
+pub use set_ir::SetIR;
+pub use dict_ir::DictIR;
+pub use ternary_ir::IfExprIR;
+pub use match_ir::{MatchIR, MatchCaseIR};
 pub use ellipsis_ir::EllipsisIR;
-pub use pattern_ir::{PatternIR};
+pub use pattern_ir::{PatternIR, ValuePatternIR, AsPatternIR};
 pub use annotation_ir::AnnotationIR;
 pub use binop_ir::BinOpIR;
 pub use attributeexpr_ir::AttributeExprIR;

@@ -21,6 +21,22 @@ message ProgramIR {
   repeated StmtIR body = 7;
 }
 
+message SetIR {
+  repeated ExprIR elements = 1;
+  optional SourceSpan span = 2;
+}
+
+message DictIR {
+  repeated DictEntryIR entries = 1;
+  optional SourceSpan span = 2;
+}
+
+message DictEntryIR {
+  optional ExprIR key = 1;
+  ExprIR value = 2;
+  optional SourceSpan span = 3;
+}
+
 message ScopeIR {
   int64 id = 1;
   string name = 2;
@@ -217,7 +233,7 @@ message PatternIR {
 
 message ValuePatternIR {
   ExprIR value = 1;
-  SourceSpan span = 2;
+  optional SourceSpan span = 2;
 }
 
 enum SingletonValue {
@@ -229,19 +245,19 @@ enum SingletonValue {
 
 message SingletonPatternIR {
   SingletonValue value = 1;
-  SourceSpan span = 2;
+  optional SourceSpan span = 2;
 }
 
 message SequencePatternIR {
   repeated PatternIR patterns = 1;
-  SourceSpan span = 2;
+  optional SourceSpan span = 2;
 }
 
 message MappingPatternIR {
   repeated ExprIR keys = 1;
   repeated PatternIR patterns = 2;
   optional string rest = 3;
-  SourceSpan span = 4;
+  optional SourceSpan span = 4;
 }
 
 message ClassPatternIR {
@@ -249,38 +265,38 @@ message ClassPatternIR {
   repeated PatternIR positional_patterns = 2;
   repeated string keyword_names = 3;
   repeated PatternIR keyword_patterns = 4;
-  SourceSpan span = 5;
+  optional SourceSpan span = 5;
 }
 
 message StarPatternIR {
   optional string name = 1;
-  SourceSpan span = 2;
+  optional SourceSpan span = 2;
 }
 
 message CapturePatternIR {
   string name = 1;
-  SourceSpan span = 2;
+  optional SourceSpan span = 2;
 }
 
 message WildcardPatternIR {
-  SourceSpan span = 1;
+  optional SourceSpan span = 1;
 }
 
 message AsPatternIR {
   PatternIR pattern = 1;
   string name = 2;
-  SourceSpan span = 3;
+  optional SourceSpan span = 3;
 }
 
 message OrPatternIR {
   repeated PatternIR patterns = 1;
-  SourceSpan span = 2;
+  optional SourceSpan span = 2;
 }
 
 message MatchIR {
   ExprIR subject = 2;
   repeated MatchCaseIR cases = 3;
-  SourceSpan span = 4;
+  optional SourceSpan span = 4;
 }
 
 message MatchCaseIR {
@@ -288,7 +304,14 @@ message MatchCaseIR {
   PatternIR pattern = 2;
   optional ExprIR guard = 3;
   repeated StmtIR body = 4;
-  SourceSpan span = 5;
+  optional SourceSpan span = 5;
+}
+
+message IfExprIR {
+  ExprIR test = 1;
+  ExprIR body = 2;
+  ExprIR orelse = 3;
+  optional SourceSpan span = 4;
 }
 
 message ExprIR {
@@ -310,6 +333,9 @@ message ExprIR {
     SubscriptIR subscript = 15;
     SliceIR slice = 16;
     EllipsisIR ellipsis = 17;
+    DictIR dict = 18;
+    SetIR set = 19;
+    IfExprIR if_expr = 20;
   }
 }
 

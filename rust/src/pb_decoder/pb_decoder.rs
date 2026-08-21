@@ -3,6 +3,7 @@ use std::io;
 use std::path::PathBuf;
 
 use crate::ir::nodes::annotation_ir::AnnotationHeadIR;
+use crate::ir::nodes::dict_ir::DictEntryIR;
 use crate::ir::nodes::match_ir::MatchCaseIR;
 use crate::ir::nodes::pattern_ir::AsPatternIR;
 use crate::ir::nodes::pattern_ir::CapturePatternIR;
@@ -768,12 +769,86 @@ impl PBDecoder {
                     use_scope_id: identifier.use_scope_id,
                     span: Self::convert_optional_span(&identifier.span),
                 }))
+            },
+
+            Some(pb::expr_ir::Kind::Set(set_ir)) => {
+                let mut elements: Vec<ExprIR> = Vec::new();
+
+                for element in &set_ir.elements {
+                    elements.push(Self::convert_expr(element)?);
+                }
+
+                let span = Self::convert_optional_span(&set_ir.span);
+
+                Ok(ExprIR::SetExpr(SetIR {
+                    elements,
+                    span,
+                }))
+            },
+
+            Some(pb::expr_ir::Kind::Dict(dict_ir)) => {
+                let mut elements: Vec<DictEntryIR> = Vec::new();
+
+                for entry in &dict_ir.entries {
+                    let key = match &entry.key {
+                        Some(key) => Some(Self::convert_expr(key)?),
+                        None => None,
+                    };
+
+                    let value = match &entry.value {
+                        Some(value) => Self::convert_expr(value)?,
+                        None => return Err("dict entry has no value".into()),
+                    };
+
+                    let span = Self::convert_optional_span(&entry.span);
+
+                    elements.push(DictEntryIR {
+                        key,
+                        value,
+                        span,
+                    });
+                }
+
+                let span = Self::convert_optional_span(&dict_ir.span);
+
+                Ok(ExprIR::DictExpr(DictIR {
+                    elements,
+                    span,
+                }))
             }
 
-            Some(pb::expr_ir::Kind::Ellipsis(ellipsis)) => Ok(ExprIR::EllipsisExpr(
-                EllipsisIR { 
-                    span: Self::convert_optional_span(&ellipsis.span),
-                })),
+            Some(pb::expr_ir::Kind::IfExpr(if_expr_ir)) => {
+                let test = match &if_expr_ir.test {
+                    Some(expr) => Self::convert_expr(expr)?,
+                    None => return Err("if expression has no test".into()),
+                };
+
+                let body = match &if_expr_ir.body {
+                    Some(expr) => Self::convert_expr(expr)?,
+                    None => return Err("if expression has no body".into()),
+                };
+
+                let orelse = match &if_expr_ir.orelse {
+                    Some(expr) => Self::convert_expr(expr)?,
+                    None => return Err("if expression has no else expression".into()),
+                };
+
+                let span = match &if_expr_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(ExprIR::IfExpr(IfExprIR {
+                    test: Box::new(test),
+                    body: Box::new(body),
+                    orelse: Box::new(orelse),
+                    span,
+                }))
+            },
+
+            Some(pb::expr_ir::Kind::Ellipsis(ellipsis)) => Ok(ExprIR::EllipsisExpr(EllipsisIR { 
+                span: Self::convert_optional_span(&ellipsis.span),
+            })),
 
             Some(pb::expr_ir::Kind::Integer(integer)) => Ok(ExprIR::IntegerExpr(IntegerIR {
                 value: integer.value,
