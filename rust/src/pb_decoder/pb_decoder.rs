@@ -1,9 +1,6 @@
 use std::fs;
 use std::io;
-use std::os::unix::thread;
 use std::path::PathBuf;
-use std::println;
-use std::todo;
 
 use crate::ir::nodes::annotation_ir::AnnotationHeadIR;
 use crate::ir::nodes::match_ir::MatchCaseIR;
@@ -22,7 +19,6 @@ use crate::ir::nodes::symbol_ir::SymbolIR;
 use crate::ir::nodes::*;
 use crate::ir::{expr_ir::ExprIR, operator::Operator, span_ir::SourceSpan, stmt_ir::StmtIR};
 use crate::pb;
-use crate::pb::EllipsisIr;
 
 use prost::Message;
 
@@ -118,7 +114,7 @@ impl PBDecoder {
     }
 
     fn convert_scope(scope: &pb::ScopeIr) -> ScopeIR {
-        let span = scope.span.as_ref().map(Self::convert_span);
+        let span = Self::convert_optional_span(&scope.span);
         ScopeIR {
             id: scope.id,
             parent_id: scope.parent_id,
@@ -129,7 +125,7 @@ impl PBDecoder {
     }
 
     fn convert_symbol(symbol: &pb::SymbolIr) -> SymbolIR {
-        let span = symbol.span.as_ref().map(Self::convert_span);
+        let span = Self::convert_optional_span(&symbol.span);
         SymbolIR { 
             id: symbol.id, 
             name: symbol.name.clone(), 
@@ -149,7 +145,7 @@ impl PBDecoder {
             imported_name: import.imported_name.clone(),
             alias: import.alias.clone(),
             relative_level: import.relative_level,
-            span: import.span.as_ref().map(Self::convert_span),
+            span: Self::convert_optional_span(&import.span),
         }
     }
 
@@ -181,10 +177,7 @@ impl PBDecoder {
             None => None,
         };
 
-        let span = match &binding.span {
-            Some(span) => Some(Self::convert_span(span)),
-            None => None,
-        };
+        let span = Self::convert_optional_span(&binding.span);
 
         let annotation = match &binding.annotation {
             Some(annotation) => Some(Self::convert_annotation(annotation)?),
@@ -216,7 +209,10 @@ impl PBDecoder {
             args.push(Self::convert_expr(arg)?);
         }
 
-        Ok(AnnotationIR { head, args })
+        Ok(AnnotationIR { 
+            head,
+            args
+        })
     }
 
     fn convert_annotation_head(
@@ -233,10 +229,7 @@ impl PBDecoder {
             None => return Err("annotation head has no scope_id".into()),
         };
 
-        let span = match &head.span {
-            Some(span) => Some(Self::convert_span(span)),
-            None => None,
-        };
+        let span = Self::convert_optional_span(&head.span);
 
         Ok(AnnotationHeadIR {
             root: head.root.clone(),
@@ -262,10 +255,7 @@ impl PBDecoder {
                 None => None,
             },
 
-            span: match &param.span {
-                Some(span) => Some(Self::convert_span(span)),
-                None => None,
-            },
+            span: Self::convert_optional_span(&param.span),
         })
     }
 
@@ -308,10 +298,7 @@ impl PBDecoder {
             body: stmts,
             returns: returns,
             decorators: decorators,
-            span: match &function.span {
-                Some(span) => Some(Self::convert_span(span)),
-                None => None,
-            },
+            span: Self::convert_optional_span(&function.span),
         })
     }
 
@@ -344,10 +331,7 @@ impl PBDecoder {
             body: body,
             bases: bases,
             decorators: decorators,
-            span: match &class_decl.span {
-                Some(span) => Some(Self::convert_span(span)),
-                None => None,
-            },
+            span: Self::convert_optional_span(&class_decl.span),
         })
     }
 
@@ -359,10 +343,7 @@ impl PBDecoder {
                     None => return Err("value pattern has no value".into()),
                 };
 
-                let span = match &valuepattern_ir.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&valuepattern_ir.span);
 
                 Ok(PatternIR::ValuePattern(ValuePatternIR { 
                     value, 
@@ -376,10 +357,7 @@ impl PBDecoder {
                     None => return Err("as pattern has no inner pattern".into()),
                 };
 
-                let span = match &aspattern_ir.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&aspattern_ir.span);
 
                 Ok(PatternIR::AsPattern(AsPatternIR {
                     pattern: Box::new(inner_pattern),
@@ -396,10 +374,7 @@ impl PBDecoder {
                     patterns.push(pattern);
                 }
 
-                let span = match &sequencepattern_ir.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&sequencepattern_ir.span);
 
                 Ok(PatternIR::SequencePattern(SequencePatternIR {
                     patterns,
@@ -420,10 +395,7 @@ impl PBDecoder {
                     }
                 };
 
-                let span = match &singletonpattern_ir.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&singletonpattern_ir.span);
 
                 Ok(PatternIR::SingletonPattern(SingletonPatternIR {
                     value,
@@ -442,10 +414,7 @@ impl PBDecoder {
                     patterns.push(Self::convert_pattern(pattern)?);
                 }
 
-                let span = match &mappingpattern_ir.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&mappingpattern_ir.span);
 
                 let rest = mappingpattern_ir.rest.clone();
 
@@ -473,10 +442,7 @@ impl PBDecoder {
                     keyword_patterns.push(Self::convert_pattern(pattern)?);
                 }
 
-                let span = match &classpattern_ir.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&classpattern_ir.span);
 
                 Ok(PatternIR::ClassPattern(ClassPatternIR {
                     cls,
@@ -488,10 +454,7 @@ impl PBDecoder {
             },
 
             Some(pb::pattern_ir::Kind::StarPattern(starpattern_ir)) => {
-                let span = match &starpattern_ir.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&starpattern_ir.span);
 
                 Ok(PatternIR::StarPattern(StarPatternIR {
                     name: starpattern_ir.name.clone(),
@@ -500,10 +463,7 @@ impl PBDecoder {
             },
 
             Some(pb::pattern_ir::Kind::CapturePattern(capturepattern_ir)) => {
-                let span = match &capturepattern_ir.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&capturepattern_ir.span);
 
                 Ok(PatternIR::CapturePattern(CapturePatternIR {
                     name: capturepattern_ir.name.clone(),
@@ -512,10 +472,7 @@ impl PBDecoder {
             },
 
             Some(pb::pattern_ir::Kind::WildcardPattern(wildcardpattern_ir)) => {
-                let span = match &wildcardpattern_ir.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&wildcardpattern_ir.span);
 
                 Ok(PatternIR::WildcardPattern(WildcardPatternIR {
                     span,
@@ -529,10 +486,7 @@ impl PBDecoder {
                     patterns.push(Self::convert_pattern(pattern)?);
                 }
 
-                let span = match &orpattern_ir.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&orpattern_ir.span);
 
                 Ok(PatternIR::OrPattern(OrPatternIR {
                     patterns,
@@ -553,10 +507,7 @@ impl PBDecoder {
             body.push(stmt_ir);
         }
 
-        let span = match &case.span {
-            Some(span) => Some(Self::convert_span(span)),
-            None => None,
-        };
+        let span = Self::convert_optional_span(&case.span);
 
         let guard = match &case.guard {
             Some(guard) => Some(Self::convert_expr(guard)?),
@@ -586,10 +537,7 @@ impl PBDecoder {
                     cases.push(case_ir);
                 }
 
-                let span = match &match_ir.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&match_ir.span);
 
                 let subject = match &match_ir.subject {
                     Some(subject) => Box::new(Self::convert_expr(subject)?),
@@ -621,10 +569,7 @@ impl PBDecoder {
 
                 scope_id: binding.scope_id,
 
-                span: match &binding.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                },
+                span: Self::convert_optional_span(&binding.span),
             })),
 
             Some(pb::stmt_ir::Kind::AugAssign(aug)) => {
@@ -638,10 +583,7 @@ impl PBDecoder {
                     None => return Err("augmented assignment has no value".into()),
                 };
 
-                let span = match &aug.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&aug.span);
 
                 Ok(StmtIR::AugAssign(AugAssignIR {
                     target,
@@ -658,10 +600,7 @@ impl PBDecoder {
                     None => None,
                 };
 
-                let span = match &ret.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&ret.span);
 
                 Ok(StmtIR::Return(ReturnIR { value, span }))
             }
@@ -672,10 +611,7 @@ impl PBDecoder {
                     None => return Err("expression statement has no expression".into()),
                 };
 
-                let span = match &expr_stmt.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&expr_stmt.span);
 
                 Ok(StmtIR::ExprStmt(ExprStmtIR { value, span }))
             }
@@ -700,10 +636,7 @@ impl PBDecoder {
                     orelse.push(stmt);
                 }
 
-                let span = match &if_stmt.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&if_stmt.span);
 
                 Ok(StmtIR::If(IfIR {
                     test,
@@ -741,10 +674,7 @@ impl PBDecoder {
                     orelse.push(stmt);
                 }
 
-                let span = match &for_loop.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&for_loop.span);
 
                 Ok(StmtIR::ForLoop(ForLoopIR {
                     target,
@@ -777,10 +707,7 @@ impl PBDecoder {
                     orelse.push(stmt);
                 }
 
-                let span = match &while_loop.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&while_loop.span);
 
                 Ok(StmtIR::WhileLoop(WhileLoopIR {
                     test,
@@ -793,10 +720,7 @@ impl PBDecoder {
             }
 
             Some(pb::stmt_ir::Kind::ImportStmt(import_stmt)) => {
-                let span = match &import_stmt.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&import_stmt.span);
 
                 Ok(StmtIR::Import(ImportIR {
                     id: import_stmt.id,
@@ -841,57 +765,37 @@ impl PBDecoder {
                 Ok(ExprIR::IdentifierExpr(IdentifierIR {
                     name: identifier.name.clone(),
                     use_scope_id: identifier.use_scope_id,
-                    span: match &identifier.span {
-                        Some(span) => Some(Self::convert_span(span)),
-                        None => None,
-                    },
+                    span: Self::convert_optional_span(&identifier.span),
                 }))
             }
 
             Some(pb::expr_ir::Kind::Ellipsis(ellipsis)) => Ok(ExprIR::EllipsisExpr(
-                EllipsisIR { span: match &ellipsis.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None
-                }
-            })),
+                EllipsisIR { 
+                    span: Self::convert_optional_span(&ellipsis.span),
+                })),
 
             Some(pb::expr_ir::Kind::Integer(integer)) => Ok(ExprIR::IntegerExpr(IntegerIR {
                 value: integer.value,
-                span: match &integer.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                },
+                span: Self::convert_optional_span(&integer.span),
             })),
 
             Some(pb::expr_ir::Kind::FloatLit(float_lit)) => Ok(ExprIR::FloatExpr(FloatIR {
                 value: float_lit.value,
-                span: match &float_lit.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                },
+                span: Self::convert_optional_span(&float_lit.span),
             })),
 
             Some(pb::expr_ir::Kind::StringLit(string_lit)) => Ok(ExprIR::StringExpr(StringIR {
                 value: string_lit.value.clone(),
-                span: match &string_lit.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                },
+                span: Self::convert_optional_span(&string_lit.span),
             })),
 
             Some(pb::expr_ir::Kind::BoolLit(bool_lit)) => Ok(ExprIR::BoolExpr(BooleanIR {
                 value: bool_lit.value,
-                span: match &bool_lit.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                },
+                span: Self::convert_optional_span(&bool_lit.span),
             })),
 
             Some(pb::expr_ir::Kind::NoneLit(_none_lit)) => Ok(ExprIR::NoneExpr(NoneIR {
-                span: match &_none_lit.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                },
+                span: Self::convert_optional_span(&_none_lit.span),
             })),
 
             Some(pb::expr_ir::Kind::List(list)) => {
@@ -903,10 +807,7 @@ impl PBDecoder {
 
                 Ok(ExprIR::ListExpr(ListIR {
                     elements: elements,
-                    span: match &list.span {
-                        Some(span) => Some(Self::convert_span(span)),
-                        None => None,
-                    },
+                    span: Self::convert_optional_span(&list.span),
                 }))
             }
 
@@ -919,10 +820,7 @@ impl PBDecoder {
 
                 Ok(ExprIR::ListExpr(ListIR {
                     elements: elements,
-                    span: match &tuple.span {
-                        Some(span) => Some(Self::convert_span(span)),
-                        None => None,
-                    },
+                    span: Self::convert_optional_span(&tuple.span),
                 }))
             }
 
@@ -935,6 +833,7 @@ impl PBDecoder {
                 };
 
                 let mut args: Vec<ExprIR> = Vec::new();
+
                 for arg in &call.args {
                     let arg = Self::convert_expr(arg)?;
                     args.push(arg);
@@ -953,10 +852,7 @@ impl PBDecoder {
                         None => return Err("keyword argument has no value".into()),
                     };
 
-                    let span = match &kwarg.span {
-                        Some(span) => Some(Self::convert_span(span)),
-                        None => None,
-                    };
+                    let span = Self::convert_optional_span(&kwarg.span);
 
                     kwargs.push(KeywordArgIR {
                         name,
@@ -969,10 +865,7 @@ impl PBDecoder {
                     callee: callee,
                     args: args,
                     kwargs: kwargs,
-                    span: match &call.span {
-                        Some(span) => Some(Self::convert_span(span)),
-                        None => None,
-                    },
+                    span: Self::convert_optional_span(&call.span),
                 }))
             }
 
@@ -991,15 +884,13 @@ impl PBDecoder {
                 Ok(ExprIR::AttributeExpr(AttributeExprIR {
                     target: base,
                     attr: attribute.attr.clone(),
-                    span: match &attribute.span {
-                        Some(span) => Some(Self::convert_span(span)),
-                        None => None,
-                    },
+                    span: Self::convert_optional_span(&attribute.span),
                 }))
             }
 
             Some(pb::expr_ir::Kind::Binop(binop)) => {
                 let operator = Operator::from(binop.op);
+
                 let left = match &binop.left {
                     Some(left) => Box::new(Self::convert_expr(left)?),
                     None => {
@@ -1010,6 +901,7 @@ impl PBDecoder {
                         ));
                     }
                 };
+
                 let right = match &binop.right {
                     Some(right) => Box::new(Self::convert_expr(right)?),
                     None => {
@@ -1020,10 +912,9 @@ impl PBDecoder {
                         ));
                     }
                 };
-                let span = match &binop.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+
+                let span = Self::convert_optional_span(&binop.span);
+
                 Ok(ExprIR::BinOpExpr(BinOpIR {
                     left: left,
                     right: right,
@@ -1046,10 +937,7 @@ impl PBDecoder {
                     }
                 };
 
-                let span = match &unaryop.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&unaryop.span);
 
                 Ok(ExprIR::UnaryOpExpr(UnaryOpIR {
                     op: operator,
@@ -1067,10 +955,7 @@ impl PBDecoder {
 
                 let operator = Operator::from(boolop.op);
 
-                let span = match &boolop.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&boolop.span);
 
                 Ok(ExprIR::BoolOpExpr(BoolOpIR {
                     values,
@@ -1091,10 +976,7 @@ impl PBDecoder {
                     }
                 };
 
-                let span = match &compare.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&compare.span);
 
                 let mut ops: Vec<Operator> = Vec::new();
                 for &op in &compare.ops {
@@ -1138,10 +1020,7 @@ impl PBDecoder {
                     }
                 };
 
-                let span = match &subscript.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&subscript.span);
 
                 Ok(ExprIR::SubscriptExpr(SubscriptIR {
                     target,
@@ -1151,10 +1030,7 @@ impl PBDecoder {
             }
 
             Some(pb::expr_ir::Kind::Slice(slice)) => {
-                let span = match &slice.span {
-                    Some(span) => Some(Self::convert_span(span)),
-                    None => None,
-                };
+                let span = Self::convert_optional_span(&slice.span);
 
                 let upper = match &slice.upper {
                     Some(upper) => Some(Box::new(Self::convert_expr(upper)?)),
@@ -1183,6 +1059,12 @@ impl PBDecoder {
                 return Err("malformed ExprIR: protobuf oneof field 'kind' is unset (the producer emitted an empty expression)".into());
             }
         }
+    }
+
+    fn convert_optional_span(
+        span: &Option<pb::SourceSpan>
+    ) -> Option<SourceSpan> {
+        span.as_ref().map(Self::convert_span)
     }
 
     fn missing_expr(
