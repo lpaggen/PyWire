@@ -1,7 +1,8 @@
 from common.span import SourceSpan
+from ir.constant_ir import ConstantIR
 from ir.expr_ir import ExprIR
 
 
-class BytesIR(ExprIR):
-    def __init__(self, value: ExprIR, span: SourceSpan):
-        super().__init__(value=value, span=span)
+class BytesIR(ConstantIR):
+    value: bytes
+    span: SourceSpan

@@ -1,13 +1,15 @@
+from dataclasses import dataclass
+
 from common.span import SourceSpan
+from ir.constant_ir import ConstantIR
 from .expr_ir import ExprIR
 from generated import _pb2
 
 
-class FloatIR(ExprIR):
-    def __init__(self, value: float, span: SourceSpan = None):
-        super().__init__(span=span, value=value)
-        self.span = span
-        self.value = value
+@dataclass
+class FloatIR(ConstantIR):
+    value: float
+    span: SourceSpan
 
     def __repr__(self):
         return str(self.value)

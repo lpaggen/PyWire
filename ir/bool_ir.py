@@ -1,13 +1,16 @@
+from dataclasses import dataclass
+
+from ir.constant_ir import ConstantIR
+
 from .ir_node import IRNode
 from common.span import SourceSpan
 from generated import _pb2
 
 
-class BooleanIR(IRNode):
-    def __init__(self, value: bool, span: SourceSpan = None):
-        super().__init__(span=span)
-        self.span = span
-        self.value = value
+@dataclass
+class BooleanIR(ConstantIR):
+    value: bool
+    span: SourceSpan
 
     def __repr__(self):
         return "true" if self.value is True else "false"

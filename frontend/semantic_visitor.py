@@ -2,8 +2,10 @@ import ast
 
 from ir.bytes_ir import BytesIR
 from ir.complex_ir import ComplexIR
+from ir.comprehension_ir import CompIR, ListCompIR, SetCompIR
 from ir.dict_ir import DictEntryIR, DictIR
 from ir.expr_ir import ExprIR
+from ir.fstring_ir import Conversion, FormattedValueIR, JoinedStrIR
 from ir.lambda_ir import LambdaIR
 from ir.set_ir import SetIR
 from ir.starred_ir import StarredIR
@@ -273,6 +275,15 @@ class SemanticBuilder(ast.NodeVisitor):
             orelse=orelse,
             span=SourceSpan.span(node, self.file_path),
         )
+
+    def visit_AsyncFor(self, node):
+        ...
+
+    def visit_AsyncFunctionDef(self, node):
+        ...
+
+    def visit_AsyncWith(self, node):
+        ...
 
     def visit_For(self, node: ast.For):
         parent_scope = self.current_scope()
@@ -710,22 +721,62 @@ class SemanticBuilder(ast.NodeVisitor):
 
         return params
 
+    def parse_comp(self, comp: ast.comprehension) -> CompIR:
+        return CompIR(
+            target=self.parse_expr(comp.target),
+            iterable=self.parse_expr(comp.iter),
+            ifs=[self.parse_expr(cond) for cond in comp.ifs],
+            is_async=bool(comp.is_async),
+            span=SourceSpan.span(comp, self.file_path),
+        )
+
+    def lower_formatted_value(
+        self,
+        value: ast.FormattedValue | ast.Constant,
+    ):
+        if isinstance(value, ast.FormattedValue):
+            return FormattedValueIR(
+                value=self.parse_expr(value.value),
+                conversion=Conversion(value.conversion),
+                format_spec=(
+                    self.parse_expr(value.format_spec)
+                    if value.format_spec is not None
+                    else None
+                ),
+                span=SourceSpan.span(value, self.file_path),
+            )
+
+        if isinstance(value, ast.Constant):
+            return self.parse_expr(value)
+
     def parse_expr(self, node: ast.AST):
         """
         Recursive function to parse RHS of AnnAssign, Assign
         """
         if isinstance(node, ast.Constant):
             if isinstance(node.value, bool):
-                return BooleanIR(node.value)
+                return BooleanIR(
+                    node.value,
+                    span=SourceSpan.span(node, self.file_path)
+                )
 
             if isinstance(node.value, int):
-                return IntegerIR(node.value)
+                return IntegerIR(
+                    node.value,
+                    span=SourceSpan.span(node, self.file_path)
+                )
 
             if isinstance(node.value, float):
-                return FloatIR(node.value)
+                return FloatIR(
+                    node.value,
+                    span=SourceSpan.span(node, self.file_path)
+                )
 
             if isinstance(node.value, str):
-                return StringIR(node.value)
+                return StringIR(
+                    node.value,
+                    span=SourceSpan.span(node, self.file_path)
+                )
 
             if isinstance(node.value, bytes):
                 return BytesIR(
@@ -741,12 +792,16 @@ class SemanticBuilder(ast.NodeVisitor):
 
             if node.value is Ellipsis:
                 return EllipsisIR(
+                    value=node.value,
                     span=SourceSpan.span(node, self.file_path),
                 )
 
             # TODO double check
             if node.value is None:
-                return NoneIR()
+                return NoneIR(
+                    value=node.value,
+                    span=SourceSpan.span(node, self.file_path)
+                )
 
             raise NotImplementedError(f"Unsupported constant: {node.value!r}")
 
@@ -755,6 +810,34 @@ class SemanticBuilder(ast.NodeVisitor):
                 test=self.parse_expr(node.test),
                 body=self.parse_expr(node.body),
                 orelse=self.parse_expr(node.orelse),
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.JoinedStr):
+            return JoinedStrIR(
+                values=[self.lower_formatted_value(value) for value in node.values],
+                span=SourceSpan.span(node, self.file_path)
+            )
+
+        if isinstance(node, ast.ListComp):
+            return ListCompIR(
+                elt=self.parse_expr(node.elt),
+                generators=[self.parse_comp(c) for c in node.generators],
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.SetComp):
+            return SetCompIR(
+                elt=self.parse_expr(node.elt),
+                generators=[self.parse_comp(c) for c in node.generators],
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.DictComp):
+            return SetCompIR(
+                key=self.parse_expr(node.key),
+                value=self.parse_expr(node.value),
+                generators=[self.parse_comp(c) for c in node.generators],
                 span=SourceSpan.span(node, self.file_path),
             )
 
@@ -908,7 +991,7 @@ class SemanticBuilder(ast.NodeVisitor):
                 span=SourceSpan.span(node, self.file_path),
             )
 
-        if node is None:
-            return NoneIR(span=SourceSpan.span(node, self.file_path))
+        # if node is None:
+        #     return NoneIR(span=SourceSpan.span(node, self.file_path))
 
         raise NotImplementedError(f"Unsupported expression node: {type(node).__name__}")

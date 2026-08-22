@@ -1,11 +1,14 @@
+from dataclasses import dataclass
+
 from common.span import SourceSpan
-from .expr_ir import ExprIR
+from ir.constant_ir import ConstantIR
 from generated import _pb2
 
 
-class EllipsisIR(ExprIR):
-    def __init__(self, span: SourceSpan = None):
-        super().__init__(span=span, value=Ellipsis)
+@dataclass
+class EllipsisIR(ConstantIR):
+    value: ellipsis
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.EllipsisIR()

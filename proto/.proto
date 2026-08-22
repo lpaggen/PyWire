@@ -320,6 +320,51 @@ message IfExprIR {
   optional SourceSpan span = 4;
 }
 
+message CompIR {
+  ExprIR target = 1;
+  ExprIR iterable = 2;
+  repeated ExprIR ifs = 3;
+  bool is_async = 4;
+  SourceSpan span = 5;
+}
+
+message ListCompIR {
+  ExprIR elt = 1;
+  repeated CompIR generators = 2;
+  SourceSpan span = 3;
+}
+
+message SetCompIR {
+  ExprIR elt = 1;
+  repeated CompIR generators = 2;
+  SourceSpan span = 3;
+}
+
+message DictCompIR {
+  ExprIR key = 1;
+  ExprIR value = 2;
+  repeated CompIR generators = 3;
+  SourceSpan span = 4;
+}
+
+message GeneratorExprIR {
+  ExprIR elt = 1;
+  repeated CompIR generators = 2;
+  SourceSpan span = 3;
+}
+
+message FormattedValueIR {
+  ExprIR value = 1;
+  int32 conversion = 2;
+  JoinedStrIR format_spec = 3;
+  SourceSpan span = 4;
+}
+
+message JoinedStrIR {
+  repeated ExprIR values = 1;
+  SourceSpan span = 2;
+}
+
 message ExprIR {
   oneof kind {
     IdentifierIR identifier = 1;
@@ -344,6 +389,12 @@ message ExprIR {
     IfExprIR if_expr = 20;
     StarredIR starred = 21;
     NamedExprIR named_expr = 22;
+    ListCompIR list_comp = 23;
+    SetCompIR set_comp = 24;
+    DictCompIR dict_comp = 25;
+    GeneratorExprIR generator_expr = 26;
+    JoinedStrIR joined_str = 27;
+    FormattedValueIR formatted_value = 28;
   }
 }
 

@@ -16,6 +16,9 @@ match x:
     case _:
         ...
 
+b = [x for x in range(10)]
+
+c = f"sin({x}) is {45.3223332:.3}"
 
 # from enum import Enum
 
