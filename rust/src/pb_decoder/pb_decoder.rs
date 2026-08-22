@@ -894,7 +894,7 @@ impl PBDecoder {
                     elements.push(expr_ir);
                 }
 
-                Ok(ExprIR::TupleExpr(TupleIR {
+                Ok(ExprIR::ListExpr(ListIR {
                     elements: elements,
                     span: Self::convert_optional_span(&tuple.span),
                 }))
