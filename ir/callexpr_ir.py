@@ -4,8 +4,8 @@ from generated import _pb2
 
 
 class KeywordArgIR(ExprIR):
-    def __init__(self, name: str, value: ExprIR, span: SourceSpan = None):
-        super().__init__(span=span, value=value)
+    def __init__(self, name: str | None, value: ExprIR, span: SourceSpan = None):
+        super().__init__(span=span, value=value)  # TODO check if value should be IdentifierIR or not
         self.name = name
         self.value = value
         self.span = span

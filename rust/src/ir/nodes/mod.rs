@@ -34,7 +34,11 @@ pub mod match_ir;
 pub mod ternary_ir;
 pub mod set_ir;
 pub mod dict_ir;
+pub mod starred_ir;
+pub mod walrus_ir;
 
+pub use walrus_ir::NamedExprIR;
+pub use starred_ir::StarredIR;
 pub use set_ir::SetIR;
 pub use dict_ir::DictIR;
 pub use ternary_ir::IfExprIR;

@@ -37,6 +37,11 @@ message DictEntryIR {
   optional SourceSpan span = 3;
 }
 
+message StarredIR {
+  ExprIR value = 1;
+  optional SourceSpan span = 2;
+}
+
 message ScopeIR {
   int64 id = 1;
   string name = 2;
@@ -196,9 +201,10 @@ message FunctionIR {
 message ParamIR {
   int64 symbol_id = 1;
   string name = 2;
-  optional AnnotationIR annotation = 3;
-  optional ExprIR default_value = 4;
-  optional SourceSpan span = 5;
+  ParamKind kind = 3;
+  optional AnnotationIR annotation = 4;
+  optional ExprIR default_value = 5;
+  optional SourceSpan span = 6;
 }
 
 message ClassIR {
@@ -336,7 +342,24 @@ message ExprIR {
     DictIR dict = 18;
     SetIR set = 19;
     IfExprIR if_expr = 20;
+    StarredIR starred = 21;
+    NamedExprIR named_expr = 22;
   }
+}
+
+enum ParamKind {
+  PARAM_KIND_UNSPECIFIED = 0;
+  PARAM_POSITIONAL_ONLY = 1;
+  PARAM_POSITIONAL_OR_KEYWORD = 2;
+  PARAM_VAR_POSITIONAL = 3;
+  PARAM_KEYWORD_ONLY = 4;
+  PARAM_VAR_KEYWORD = 5;
+}
+
+message NamedExprIR {
+  string target = 1;
+  ExprIR value = 2;
+  optional SourceSpan span = 3;
 }
 
 message IdentifierIR {

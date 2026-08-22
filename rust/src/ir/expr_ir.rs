@@ -1,4 +1,4 @@
-use crate::ir::nodes::{AttributeExprIR, BinOpIR, BoolOpIR, BooleanIR, CallExprIR, CompareIR, DictIR, EllipsisIR, FloatIR, IdentifierIR, IfExprIR, IntegerIR, ListIR, NoneIR, SetIR, SliceIR, StringIR, SubscriptIR, TupleIR, UnaryOpIR};
+use crate::ir::nodes::{AttributeExprIR, BinOpIR, BoolOpIR, BooleanIR, CallExprIR, CompareIR, DictIR, EllipsisIR, FloatIR, IdentifierIR, IfExprIR, IntegerIR, ListIR, NamedExprIR, NoneIR, SetIR, SliceIR, StarredIR, StringIR, SubscriptIR, TupleIR, UnaryOpIR};
 
 #[derive(Debug, Clone)]
 pub enum ExprIR {
@@ -22,8 +22,11 @@ pub enum ExprIR {
     UnaryOpExpr(UnaryOpIR),
     CompareExpr(CompareIR),
     CallExpr(CallExprIR),
+    NamedExpr(NamedExprIR),
 
     IfExpr(IfExprIR),
+
+    StarredExpr(StarredIR),
 
     EllipsisExpr(EllipsisIR),
 }

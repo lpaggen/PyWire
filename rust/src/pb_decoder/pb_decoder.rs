@@ -20,6 +20,7 @@ use crate::ir::nodes::symbol_ir::SymbolIR;
 use crate::ir::nodes::*;
 use crate::ir::{expr_ir::ExprIR, operator::Operator, span_ir::SourceSpan, stmt_ir::StmtIR};
 use crate::pb;
+use crate::pb::ParamKind;
 
 use prost::Message;
 
@@ -244,6 +245,9 @@ impl PBDecoder {
         Ok(ParamIR {
             symbol_id: param.symbol_id,
             name: param.name.clone(),
+
+            // TODO make cleaner, this makes sense but it's inconsistent with the rest
+            kind: function_ir::ParamKind::try_from(param.kind)?,
 
             annotation: match &param.annotation {
                 Some(annotation) => Some(Self::convert_annotation(annotation)?),
@@ -768,6 +772,43 @@ impl PBDecoder {
                     name: identifier.name.clone(),
                     use_scope_id: identifier.use_scope_id,
                     span: Self::convert_optional_span(&identifier.span),
+                }))
+            },
+
+            Some(pb::expr_ir::Kind::NamedExpr(named_expr_ir)) => {
+                let target = named_expr_ir.target.clone();
+
+                let value = match &named_expr_ir.value {
+                    Some(value) => Self::convert_expr(value)?,
+                    None => return Err("named expression has no value".into()),
+                };
+
+                let span = match &named_expr_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(ExprIR::NamedExpr(NamedExprIR {
+                    target,
+                    value: Box::new(value),
+                    span,
+                }))
+            },
+
+            Some(pb::expr_ir::Kind::Starred(starred_ir)) => {
+                let value = match &starred_ir.value {
+                    Some(value) => Self::convert_expr(value)?,
+                    None => return Err("starred expression has no value".into()),
+                };
+
+                let span = match &starred_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(ExprIR::StarredExpr(StarredIR {
+                    value: Box::new(value),
+                    span,
                 }))
             },
 

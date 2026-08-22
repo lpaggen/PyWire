@@ -3,13 +3,17 @@ import ast
 from ir.bytes_ir import BytesIR
 from ir.complex_ir import ComplexIR
 from ir.dict_ir import DictEntryIR, DictIR
+from ir.expr_ir import ExprIR
+from ir.lambda_ir import LambdaIR
 from ir.set_ir import SetIR
+from ir.starred_ir import StarredIR
 from ir.ternary_ir import IfExprIR
+from ir.walrus_ir import NamedExprIR
 from .ir_builder import IRBuilder
 from ir.program_ir import ProgramIR
 from common.span import SourceSpan
 from ir.annotation_ir import AnnotationIR, AnnotationHeadIR
-from ir.function_ir import ParamIR, ReturnIR
+from ir.function_ir import ParamIR, ParamKind, ReturnIR
 from ir.identifier_ir import IdentifierIR
 from ir.attributeexpr_ir import AttributeExprIR
 from common.operators import Operator
@@ -174,25 +178,7 @@ class SemanticBuilder(ast.NodeVisitor):
 
         self.scope_stack.append(body_scope_id)
 
-        params = []
-
-        for arg in node.args.args:
-            param_symbol_id = self.builder.declare_symbol(
-                name=arg.arg,
-                kind=SymbolKind.SYMBOL_PARAM,
-                scope_id=self.current_scope(),
-                span=SourceSpan.span(arg, self.file_path),
-            )
-
-            params.append(
-                ParamIR(
-                    symbol_id=param_symbol_id,
-                    name=arg.arg,
-                    annotation=self.lower_annotation(arg.annotation) if arg.annotation else None,
-                    default=None,
-                    span=SourceSpan.span(arg, self.file_path),
-                )
-            )
+        params = self.lower_params(node.args)
 
         body = self.lower_statements(node.body)
 
@@ -344,6 +330,8 @@ class SemanticBuilder(ast.NodeVisitor):
                 parent_id=parent_scope_id,
                 span=SourceSpan.span(node, self.file_path)
             )
+            self.scope_stack.append(case_scope_id)
+
             cases.append(
                 MatchCaseIR(
                     scope_id=case_scope_id,
@@ -353,6 +341,8 @@ class SemanticBuilder(ast.NodeVisitor):
                     span=SourceSpan.span(node, self.file_path)
                 )
             )
+
+            self.scope_stack.pop()
 
         return MatchIR(
             subject=subject,
@@ -641,6 +631,85 @@ class SemanticBuilder(ast.NodeVisitor):
             for element in target.elts:
                 self.declare_assignment_target(element, span)
 
+    def lower_single_param(
+        self,
+        arg: ast.arg,
+        kind: ParamKind,
+        default: ExprIR | None,
+    ) -> ParamIR:
+        symbol_id = self.builder.declare_symbol(
+            name=arg.arg,
+            kind=SymbolKind.SYMBOL_PARAM,
+            scope_id=self.current_scope(),
+            span=SourceSpan.span(arg, self.file_path),
+        )
+
+        return ParamIR(
+            symbol_id=symbol_id,
+            name=arg.arg,
+            kind=kind,
+            annotation=(
+                self.lower_annotation(arg.annotation)
+                if arg.annotation is not None
+                else None
+            ),
+            default=default,
+            span=SourceSpan.span(arg, self.file_path),
+        )
+
+    def lower_params(self, args: ast.arguments) -> list[ParamIR]:
+        """lowers ast.arguments[posonlyargs, args, vararg, kwonlyargs, kw_defaults, kwarg, defaults]"""
+        params = []
+
+        # !! defaults are right-aligned, ex: params[a, b=1, c=2] -> defaults[1, 2]
+        positional = args.posonlyargs + args.args
+        defaults = args.defaults
+        default_start = len(positional) - len(defaults)  # for above example this gives 1
+
+        # first parse the posonly, then move to the posOrKeyword
+        # there are N posonlyargs in order, then there are M posorkeyword
+        for i, arg in enumerate(positional):
+            if i < len(positional):
+                kind = ParamKind.POSITIONAL_ONLY
+            else:
+                kind = ParamKind.POSITIONAL_OR_KEYWORD
+
+            # resolve defaults, start with None, then resolve_expr existing defaults
+            # recall defaults can only occur after non-defaults
+            default = None
+            if i >= default_start:
+                default = self.parse_expr(defaults[i - default_start])
+
+            params.append(self.lower_single_param(arg, kind, default))
+
+        # vararg -> ...,  *d  , ...
+        if args.vararg is not None:
+            params.append(
+                self.lower_single_param(
+                    arg=args.vararg, 
+                    kind=ParamKind.VAR_POSITIONAL,
+                    default=None
+                )
+            )
+
+        # can only come after vararg, has either None default or a default is provided
+        # ex -> *d, e, f=2 -> kwonlyargs[e, f] , kw_defaults[None, 2]
+        for arg, _default in zip(args.kwonlyargs, args.kw_defaults):
+            default = self.parse_expr(_default) if default is not None else None
+            params.append(self.lower_single_param(arg=arg, kind=ParamKind.KEYWORD_ONLY, default=default))
+
+        # **arg
+        if args.kwarg is not None:
+            params.append(
+                self.lower_single_param(
+                    arg=args.kwarg,
+                    kind=ParamKind.VAR_KEYWORD,
+                    default=None,
+                )
+            )
+
+        return params
+
     def parse_expr(self, node: ast.AST):
         """
         Recursive function to parse RHS of AnnAssign, Assign
@@ -686,6 +755,45 @@ class SemanticBuilder(ast.NodeVisitor):
                 test=self.parse_expr(node.test),
                 body=self.parse_expr(node.body),
                 orelse=self.parse_expr(node.orelse),
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.Starred):
+            return StarredIR(
+                value=self.parse_expr(node.value),
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.Lambda):
+            parent_scope = self.current_scope()
+
+            lambda_scope_id = self.builder.new_scope(
+                parent_id=parent_scope,
+                name="<lambda>",
+                kind=ScopeKind.SCOPE_FUNCTION,
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+            self.scope_stack.append(lambda_scope_id)
+
+            # params and args are the same thing here, ParamIR has all we need
+            args = self.lower_params(node.args)
+
+            body = self.parse_expr(node.body)
+
+            self.scope_stack.pop()
+
+            return LambdaIR(
+                args=args,
+                body=body,
+                scope_id=lambda_scope_id,
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.NamedExpr):
+            return NamedExprIR(
+                target=self.parse_expr(node.target),
+                value=self.parse_expr(node.value),
                 span=SourceSpan.span(node, self.file_path),
             )
 

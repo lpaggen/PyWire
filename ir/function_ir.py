@@ -5,6 +5,15 @@ from generated import _pb2
 from .expr_ir import ExprIR
 from .stmt_ir import StmtIR, stmt_to_proto
 from .decl_ir import DeclIR
+from enum import Enum
+
+
+class ParamKind(Enum):
+    POSITIONAL_ONLY = 1
+    POSITIONAL_OR_KEYWORD = 2
+    VAR_POSITIONAL = 3
+    KEYWORD_ONLY = 4
+    VAR_KEYWORD = 5
 
 
 class ParamIR(IRNode):
@@ -12,12 +21,14 @@ class ParamIR(IRNode):
         self,
         symbol_id: int,
         name: str,
+        kind: ParamKind,
         annotation: AnnotationIR,
         default,
         span: SourceSpan,
     ):
         self.symbol_id = symbol_id
         self.name = name
+        self.kind = kind
         self.annotation = annotation
         self.default = default
         self.span = span
@@ -26,6 +37,7 @@ class ParamIR(IRNode):
         proto = _pb2.ParamIR(
             symbol_id=self.symbol_id,
             name=self.name,
+            kind=self.kind.value
         )
 
         if self.annotation is not None:
