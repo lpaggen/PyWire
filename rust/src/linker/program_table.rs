@@ -1,4 +1,4 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use crate::ir::nodes::ProgramIR;
 
@@ -20,7 +20,6 @@ impl ProgramTable {
 
     pub fn build_tables(&mut self, programs: Vec<ProgramIR>) {
         for (id, program) in programs.into_iter().enumerate() {
-
             let id = id as i64;
             let module_name = program.module_name.clone();
 

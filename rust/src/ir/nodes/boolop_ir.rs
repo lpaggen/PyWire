@@ -8,15 +8,7 @@ pub struct BoolOpIR {
 }
 
 impl BoolOpIR {
-    pub fn new(
-        values: Vec<ExprIR>,
-        op: Operator,
-        span: Option<SourceSpan>,
-    ) -> Self {
-        Self {
-            values,
-            op,
-            span,
-        }
+    pub fn new(values: Vec<ExprIR>, op: Operator, span: Option<SourceSpan>) -> Self {
+        Self { values, op, span }
     }
 }

@@ -8,20 +8,18 @@ use crate::type_resolver::symbol_type_table::SymbolTypeTable;
 // use crate::type_resolver::type_resolver::TypeResolver;
 use crate::pb_decoder::pb_decoder::PBDecoder;
 
-
+mod diagnostic;
+mod ir;
 mod linker;
 mod pb_decoder;
-mod diagnostic;
-mod types;
-mod ir;
 mod type_resolver;
+mod types;
 
 pub mod pb {
     include!(concat!(env!("OUT_DIR"), "/pdc.ir.rs"));
 }
 
 fn main() -> Result<(), Vec<Diagnostic>> {
-
     let decoder: PBDecoder = PBDecoder::new("../ir_out/");
 
     let programs: Vec<ProgramIR> = match decoder.decode_dir() {
@@ -55,9 +53,7 @@ fn main() -> Result<(), Vec<Diagnostic>> {
     //     resolver.infer_statements(progr, env, program_id);
     // }
 
-
     // println!("{:?}", graph.tarjan_scc());
 
     Ok(())
-
 }

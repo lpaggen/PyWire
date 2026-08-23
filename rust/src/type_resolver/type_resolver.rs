@@ -9,7 +9,7 @@
 
 // impl<'a> TypeResolver<'a> {
 //     pub fn new(programs: &'a ProgramTable, symbol_types: &'a SymbolTypeTable) -> Self {
-//         Self { 
+//         Self {
 //             diagnostics: Vec::new(),
 //             programs: programs,
 //             symbol_types: symbol_types,
@@ -120,8 +120,8 @@
 //         let value_type = match &binding_ir.value {
 //             Some(value) => self.infer_expr_type(value),
 //             _other_none => {
-//                 self.diagnostics.push(Diagnostic { 
-//                     severity: Severity::ERROR, 
+//                 self.diagnostics.push(Diagnostic {
+//                     severity: Severity::ERROR,
 //                     span: Some(binding_ir.span.clone().unwrap()), // weird, why am i asking for option here
 //                     kind: DiagnosticKind::MissingBindingValue,
 //                     message: format!(
@@ -164,7 +164,7 @@
 //     }
 
 //     pub fn infer_statements(
-//         &mut self, 
+//         &mut self,
 //         stmts: &Vec<StmtIR>,
 //         env: &mut FlowEnv,
 //         program_id: i64,
@@ -232,5 +232,5 @@
 
 //             StmtIR::Return(return_ir) => {},
 //         }
-//     }            
+//     }
 // }

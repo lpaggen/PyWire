@@ -738,7 +738,7 @@ class SemanticBuilder(ast.NodeVisitor):
             return FormattedValueIR(
                 value=self.parse_expr(value.value),
                 conversion=Conversion(value.conversion),
-                format_spec=(
+                format_spec=(  # may change to JoinedStr
                     self.parse_expr(value.format_spec)
                     if value.format_spec is not None
                     else None
@@ -991,6 +991,40 @@ class SemanticBuilder(ast.NodeVisitor):
                 lower=self.parse_expr(node.lower) if node.lower else None,
                 upper=self.parse_expr(node.upper) if node.upper else None,
                 step=self.parse_expr(node.step) if node.step else None,
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.Await):
+            return AwaitIR(
+                value=self.parse_expr(node.value),
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.Yield):
+            return YieldIR(
+                value=self.parse_expr(node.value) if node.value is not None else None,
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.YieldFrom):
+            return YieldFromIR(
+                value=self.parse_expr(node.value),
+                span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.FormattedValue):
+            return self.lower_formatted_value(node)
+
+        if isinstance(node, ast.Interpolation):
+            return InterpolationIR(
+                value=self.parse_expr(node.value),
+                source=node.str,
+                conversion=Conversion(node.conversion),
+                format_spec=(
+                    self.parse_expr(node.format_spec)
+                    if node.format_spec is not None
+                    else None
+                ),
                 span=SourceSpan.span(node, self.file_path),
             )
 

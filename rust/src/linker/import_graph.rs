@@ -1,8 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::{
-    linker::program_table::ProgramTable,
-};
+use crate::linker::program_table::ProgramTable;
 
 pub struct ImportGraph {
     pub outgoing: HashMap<i64, HashSet<i64>>,
@@ -38,9 +36,7 @@ impl ImportGraph {
     }
 
     /// Returns SCCs in dependency-first order.
-    pub fn tarjan_scc(
-        &self,
-    ) -> Vec<HashSet<i64>> {
+    pub fn tarjan_scc(&self) -> Vec<HashSet<i64>> {
         struct TarjanState {
             next_index: usize,
             indices: HashMap<i64, usize>,
@@ -89,10 +85,7 @@ impl ImportGraph {
                 let mut component = HashSet::new();
 
                 loop {
-                    let member = state
-                        .stack
-                        .pop()
-                        .expect("Tarjan stack cannot be empty");
+                    let member = state.stack.pop().expect("Tarjan stack cannot be empty");
 
                     state.on_stack.remove(&member);
                     component.insert(member);
@@ -123,5 +116,4 @@ impl ImportGraph {
 
         state.components
     }
-
 }

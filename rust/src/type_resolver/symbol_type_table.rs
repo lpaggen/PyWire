@@ -1,5 +1,5 @@
-use std::{collections::HashMap};
 use crate::diagnostic::diagnostic::Diagnostic;
+use std::collections::HashMap;
 
 use crate::diagnostic::diagnostic::DiagnosticKind;
 use crate::diagnostic::diagnostic::Severity;
@@ -13,10 +13,13 @@ use crate::linker::resolution_table::ResolutionTable;
 use crate::linker::resolved_target::ResolvedTarget;
 use crate::types::types::CallableType;
 use crate::types::types::ClassType;
+use crate::types::types::DimType;
 use crate::types::types::TensorTypeState;
 use crate::types::types::Type;
-use crate::{ir::nodes::DeclIR, linker::{program_table::ProgramTable, symbol_ref::SymbolRef}};
-use crate::types::types::DimType;
+use crate::{
+    ir::nodes::DeclIR,
+    linker::{program_table::ProgramTable, symbol_ref::SymbolRef},
+};
 
 pub struct SymbolTypeTable {
     pub by_ref: HashMap<SymbolRef, Type>,
@@ -24,8 +27,8 @@ pub struct SymbolTypeTable {
 
 impl SymbolTypeTable {
     pub fn new() -> Self {
-        Self { 
-            by_ref: HashMap::new(), 
+        Self {
+            by_ref: HashMap::new(),
         }
     }
 
@@ -36,12 +39,13 @@ impl SymbolTypeTable {
             .unwrap_or(Type::Unknown)
     }
 
-    fn parse_binding(&self,
+    fn parse_binding(
+        &self,
         program_id: i64,
         binding: &BindingIR,
         symbols: &GlobalSymbolTable,
         resolutions: &ResolutionTable,
-        diagnostics: &mut Vec<Diagnostic>
+        diagnostics: &mut Vec<Diagnostic>,
     ) -> Type {
         match &binding.kind {
             BindingKind::Assign => {
@@ -66,15 +70,16 @@ impl SymbolTypeTable {
                     ExprIR::Constant(ConstantIR::EllipsisLit(_)) => Type::Ellipsis,
                     ExprIR::Constant(ConstantIR::BytesLit(_)) => Type::Bytes,
                     ExprIR::Constant(ConstantIR::ComplexLit(_)) => Type::Complex,
-                    _ => Type::Unknown,  // what we cannot resolve directly gets an Unknown type, we will resolve it later.
+                    _ => Type::Unknown, // what we cannot resolve directly gets an Unknown type, we will resolve it later.
                 }
-            },
+            }
 
             BindingKind::AnnAssign => {
                 self.parse_annotation(program_id, &binding, symbols, resolutions, diagnostics)
-            },
+            }
 
-            BindingKind::Unknown => {  // safe to deprecate ? makes no sense to return Unknown at any point after parsing
+            BindingKind::Unknown => {
+                // safe to deprecate ? makes no sense to return Unknown at any point after parsing
                 diagnostics.push(Diagnostic {
                     severity: Severity::ERROR,
                     span: binding.span.clone(),
@@ -93,7 +98,8 @@ impl SymbolTypeTable {
         symbols: &GlobalSymbolTable,
         resolutions: &ResolutionTable,
         diagnostics: &mut Vec<Diagnostic>,
-    ) -> Type  {  // only bindings with annotations arrive here
+    ) -> Type {
+        // only bindings with annotations arrive here
         let annotation = match &binding.annotation {
             Some(annotation) => annotation,
             None => {
@@ -113,15 +119,17 @@ impl SymbolTypeTable {
             "bool" => Type::Bool,
             "str" => Type::String,
             "None" => Type::None,
-            _ => self.resolve_annotation_path(  // check global symbol table to get the ref, ie is this torch, numpy, Local, true Unknown? 
-                annotation.head.root.as_str(), 
+            _ => self.resolve_annotation_path(
+                // check global symbol table to get the ref, ie is this torch, numpy, Local, true Unknown?
+                annotation.head.root.as_str(),
                 annotation.head.attrs.as_slice(),
-                program_id, 
-                symbols, 
-                resolutions),
+                program_id,
+                symbols,
+                resolutions,
+            ),
         };
 
-        root  // safe? or allow Unknown..? 
+        root // safe? or allow Unknown..? 
     }
 
     fn resolve_annotation_path(
@@ -143,11 +151,9 @@ impl SymbolTypeTable {
         };
 
         match target {
-            ResolvedTarget::Local(local_ref) if attrs.is_empty() => self
-                .by_ref
-                .get(local_ref)
-                .cloned()
-                .unwrap_or(Type::Unknown),
+            ResolvedTarget::Local(local_ref) if attrs.is_empty() => {
+                self.by_ref.get(local_ref).cloned().unwrap_or(Type::Unknown)
+            }
 
             ResolvedTarget::External { module, name } => {
                 self.resolve_external_path(module, name, attrs)
@@ -157,12 +163,7 @@ impl SymbolTypeTable {
         }
     }
 
-    fn resolve_external_path(
-        &self,
-        module: &str,
-        imported_name: &str,
-        attrs: &[String],
-    ) -> Type {
+    fn resolve_external_path(&self, module: &str, imported_name: &str, attrs: &[String]) -> Type {
         let mut path = Vec::new();
 
         // `import torch`: the imported name represents the module itself.
@@ -173,17 +174,11 @@ impl SymbolTypeTable {
         path.extend(attrs.iter().map(String::as_str));
 
         match (module, path.as_slice()) {
-            ("torch", ["Tensor"]) => {
-                Type::Tensor(TensorTypeState::Unresolved)
-            }
+            ("torch", ["Tensor"]) => Type::Tensor(TensorTypeState::Unresolved),
 
-            ("torch", ["Size"]) => {
-                Type::Dim(DimType::Unknown)
-            }
+            ("torch", ["Size"]) => Type::Dim(DimType::Unknown),
 
-            ("torch", ["nn", "Parameter"]) => {
-                Type::Tensor(TensorTypeState::Unresolved)
-            }
+            ("torch", ["nn", "Parameter"]) => Type::Tensor(TensorTypeState::Unresolved),
 
             _ => Type::Unknown,
         }
@@ -205,18 +200,20 @@ impl SymbolTypeTable {
                 };
 
                 let symbol_type = match decl {
-                    DeclIR::Binding(binding) => {
-                        self.parse_binding(program_id, binding, symbols, resolutions, &mut diagnostics)
-                    }
+                    DeclIR::Binding(binding) => self.parse_binding(
+                        program_id,
+                        binding,
+                        symbols,
+                        resolutions,
+                        &mut diagnostics,
+                    ),
 
                     DeclIR::Function(_) => Type::Callable(CallableType {
                         params: Vec::new(),
                         return_type: Box::new(Type::Unknown),
                     }),
 
-                    DeclIR::Class(_) => Type::Class(ClassType {
-                        symbol: symbol_ref,
-                    }),
+                    DeclIR::Class(_) => Type::Class(ClassType { symbol: symbol_ref }),
                 };
 
                 self.by_ref.insert(symbol_ref, symbol_type);

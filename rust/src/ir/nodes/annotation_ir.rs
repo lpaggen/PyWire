@@ -16,9 +16,6 @@ pub struct AnnotationHeadIR {
 
 impl AnnotationIR {
     pub fn new(head: AnnotationHeadIR, args: Vec<ExprIR>) -> Self {
-        Self {
-            head,
-            args,
-        }
+        Self { head, args }
     }
 }

@@ -9,7 +9,7 @@ pub struct DictIR {
 
 #[derive(Debug, Clone)]
 pub struct DictEntryIR {
-    pub key: Option<ExprIR>,  // {**something} is allowed 
+    pub key: Option<ExprIR>, // {**something} is allowed
     pub value: ExprIR,
     pub span: Option<SourceSpan>,
 }

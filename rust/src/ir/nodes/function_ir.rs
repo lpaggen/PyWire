@@ -1,6 +1,5 @@
-use crate::ir::nodes::{annotation_ir::AnnotationIR};
-use crate::ir::{expr_ir::ExprIR, stmt_ir::StmtIR, span_ir::SourceSpan};
-
+use crate::ir::nodes::annotation_ir::AnnotationIR;
+use crate::ir::{expr_ir::ExprIR, span_ir::SourceSpan, stmt_ir::StmtIR};
 
 #[derive(Debug, Clone)]
 pub enum ParamKind {

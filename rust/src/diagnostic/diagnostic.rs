@@ -30,8 +30,8 @@ impl Diagnostic {
     pub fn new(severity: Severity, span: SourceSpan, kind: DiagnosticKind, message: &str) -> Self {
         Self {
             severity,
-            span: Some(span), 
-            kind, 
+            span: Some(span),
+            kind,
             message: message.to_string(),
         }
     }
@@ -39,6 +39,6 @@ impl Diagnostic {
 
 // impl Diagnostic {
 //     pub fn report(&self) -> &str {
-        
+
 //     }
 // }

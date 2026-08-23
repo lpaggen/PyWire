@@ -1,4 +1,4 @@
-use crate::ir::{span_ir::SourceSpan};
+use crate::ir::span_ir::SourceSpan;
 
 #[derive(Debug, Clone)]
 pub struct SymbolIR {
@@ -16,7 +16,7 @@ pub enum SymbolKind {
     Function,
     Class,
     Param,
-    ModuleAlias
+    ModuleAlias,
 }
 
 impl From<i32> for SymbolKind {

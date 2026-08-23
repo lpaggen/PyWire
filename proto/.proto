@@ -371,6 +371,34 @@ message GeneratorExprIR {
   optional SourceSpan span = 3;
 }
 
+message AwaitIR {
+  ExprIR value = 1;
+  optional SourceSpan span = 2;
+}
+
+message YieldIR {
+  optional ExprIR value = 1;
+  optional SourceSpan span = 2;
+}
+
+message YieldFromIR {
+  ExprIR value = 1;
+  optional SourceSpan span = 2;
+}
+
+message TemplateStrIR {
+  repeated ExprIR values = 1;
+  optional SourceSpan span = 2;
+}
+
+message InterpolationIR {
+  ExprIR value = 1;
+  optional string source = 2;
+  int32 conversion = 3;
+  JoinedStrIR format_spec = 4;
+  optional SourceSpan span = 5;
+}
+
 message BytesIR {
   repeated int32 value = 1;
   optional SourceSpan span = 2;
@@ -414,6 +442,11 @@ message ExprIR {
     GeneratorExprIR generator_expr = 21;
     JoinedStrIR joined_str = 22;
     FormattedValueIR formatted_value = 23;
+    AwaitIR await_expr = 24;
+    YieldIR yield_expr = 25;
+    YieldFromIR yield_from = 26;
+    TemplateStrIR template_str = 27;
+    InterpolationIR interpolation = 28;
   }
 }
 

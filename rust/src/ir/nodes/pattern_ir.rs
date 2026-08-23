@@ -1,7 +1,6 @@
 use crate::ir::expr_ir::ExprIR;
 use crate::ir::span_ir::SourceSpan;
 
-
 #[derive(Debug, Clone)]
 pub enum PatternIR {
     ValuePattern(ValuePatternIR),
@@ -16,13 +15,11 @@ pub enum PatternIR {
     OrPattern(OrPatternIR),
 }
 
-
 #[derive(Debug, Clone)]
 pub struct ValuePatternIR {
     pub value: ExprIR,
     pub span: Option<SourceSpan>,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct SingletonPatternIR {
@@ -33,13 +30,11 @@ pub struct SingletonPatternIR {
     pub span: Option<SourceSpan>,
 }
 
-
 #[derive(Debug, Clone)]
 pub struct SequencePatternIR {
     pub patterns: Vec<PatternIR>,
     pub span: Option<SourceSpan>,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct MappingPatternIR {
@@ -48,7 +43,6 @@ pub struct MappingPatternIR {
     pub rest: Option<String>,
     pub span: Option<SourceSpan>,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct ClassPatternIR {
@@ -59,7 +53,6 @@ pub struct ClassPatternIR {
     pub span: Option<SourceSpan>,
 }
 
-
 #[derive(Debug, Clone)]
 pub struct StarPatternIR {
     /// None corresponds to `*_`
@@ -67,19 +60,16 @@ pub struct StarPatternIR {
     pub span: Option<SourceSpan>,
 }
 
-
 #[derive(Debug, Clone)]
 pub struct CapturePatternIR {
     pub name: String,
     pub span: Option<SourceSpan>,
 }
 
-
 #[derive(Debug, Clone)]
 pub struct WildcardPatternIR {
     pub span: Option<SourceSpan>,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct AsPatternIR {
@@ -87,7 +77,6 @@ pub struct AsPatternIR {
     pub name: String,
     pub span: Option<SourceSpan>,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct OrPatternIR {

@@ -19,7 +19,7 @@ impl DeclIR {
 
     pub fn symbol_id(&self) -> i64 {
         match self {
-            Self::Binding(binding) => binding.target_id,  // this is the bound symbol's ID
+            Self::Binding(binding) => binding.target_id, // this is the bound symbol's ID
             Self::Function(function) => function.id,
             Self::Class(class) => class.id,
         }

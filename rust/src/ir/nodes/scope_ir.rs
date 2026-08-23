@@ -1,4 +1,4 @@
-use crate::{ir::span_ir::SourceSpan};
+use crate::ir::span_ir::SourceSpan;
 
 #[derive(Debug, Clone)]
 pub struct ScopeIR {
@@ -15,7 +15,7 @@ pub enum ScopeKind {
     Class,
     Function,
     Module,
-    Block
+    Block,
 }
 
 impl From<i32> for ScopeKind {

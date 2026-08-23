@@ -1,5 +1,5 @@
-use crate::ir::nodes::{annotation_ir::AnnotationIR};
-use crate::ir::{span_ir::SourceSpan, expr_ir::ExprIR};
+use crate::ir::nodes::annotation_ir::AnnotationIR;
+use crate::ir::{expr_ir::ExprIR, span_ir::SourceSpan};
 
 #[derive(Debug, Clone)]
 pub struct BindingIR {

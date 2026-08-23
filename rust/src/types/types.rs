@@ -3,7 +3,7 @@ use crate::linker::symbol_ref::SymbolRef;
 // to do rename all to *Type for clarity
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    Tensor(TensorTypeState),  // annotation knows it's a tensor, but doesn't know dimensions or dtype
+    Tensor(TensorTypeState), // annotation knows it's a tensor, but doesn't know dimensions or dtype
     Int,
     Float,
     Bool,
@@ -16,7 +16,7 @@ pub enum Type {
     Callable(CallableType), // functions
     Class(ClassType),
     Dim(DimType),
-    Union(Vec<Type>),  // represent if-else-then branches, where variable types depend on conditions 
+    Union(Vec<Type>), // represent if-else-then branches, where variable types depend on conditions
     //Module(ModuleType),
     Ellipsis,
     Unknown, // may be a valid type, we just don't consider it in this tool
@@ -42,11 +42,12 @@ pub enum TensorTypeState {
 #[derive(Debug, Clone, PartialEq)]
 pub struct TensorType {
     pub shape: Vec<DimType>,
-    pub dtype: Option<DType>
+    pub dtype: Option<DType>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum DType { // tensor inner type, found in Numpy and Torch
+pub enum DType {
+    // tensor inner type, found in Numpy and Torch
     Bool,
 
     Int8,
@@ -73,6 +74,6 @@ pub enum DType { // tensor inner type, found in Numpy and Torch
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DimType {
     Known(i64),
-    Symbol(String),  // might become SymbolRef instead, easier to resolve
+    Symbol(String), // might become SymbolRef instead, easier to resolve
     Unknown,
 }

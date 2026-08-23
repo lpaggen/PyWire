@@ -4,5 +4,5 @@ pub struct SourceSpan {
     pub line: i64,
     pub col: i64,
     pub end_line: i64,
-    pub end_col: i64
+    pub end_col: i64,
 }
