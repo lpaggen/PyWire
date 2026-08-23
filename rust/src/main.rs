@@ -1,19 +1,8 @@
-use crate::diagnostic::diagnostic::Diagnostic;
 use crate::ir::nodes::program_ir::ProgramIR;
-use crate::linker::global_scope_table::GlobalSymbolTable;
-use crate::linker::import_graph::ImportGraph;
-use crate::linker::program_table::ProgramTable;
-use crate::linker::resolution_table::ResolutionTable;
-use crate::type_resolver::symbol_type_table::SymbolTypeTable;
-// use crate::type_resolver::type_resolver::TypeResolver;
 use crate::pb_decoder::pb_decoder::PBDecoder;
 
-mod diagnostic;
 mod ir;
-mod linker;
 mod pb_decoder;
-mod type_resolver;
-mod types;
 
 pub mod pb {
     include!(concat!(env!("OUT_DIR"), "/pdc.ir.rs"));
@@ -26,34 +15,6 @@ fn main() -> Result<(), Vec<Diagnostic>> {
         Ok(programs) => programs,
         Err(err) => panic!("{}", err), // should not panic since it depends on Python frontend
     };
-
-    let mut table: ProgramTable = ProgramTable::new();
-    table.build_tables(programs);
-
-    let mut symbols = GlobalSymbolTable::new();
-    symbols.build(&table);
-
-    let mut graph: ImportGraph = ImportGraph::new();
-    graph.build(&table);
-
-    let mut resolved: ResolutionTable = ResolutionTable::new();
-    resolved.resolve_imports(&table, &symbols);
-
-    let mut types: SymbolTypeTable = SymbolTypeTable::new();
-    types.build(&table, &symbols, &resolved)?;
-
-    // for (symbol_ref, symbol_type) in &types.by_ref {
-    //     println!("{:?}, {:?}", symbol_ref, symbol_type)
-    // }
-
-    // let mut resolver: TypeResolver = TypeResolver::new(&table, &types);
-    // resolver.resolve_types();
-
-    // for (id, program) in table.by_id {
-    //     resolver.infer_statements(progr, env, program_id);
-    // }
-
-    // println!("{:?}", graph.tarjan_scc());
 
     Ok(())
 }

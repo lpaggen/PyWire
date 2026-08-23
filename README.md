@@ -1,145 +1,239 @@
-# WARNING THIS IS A WORK IN PROGRESS, README IS AHEAD OF THE ACTUAL CODE FUNCTIONALITIES
+# Python 3.14 AST Mapping
 
-# Torch Shape Checker (Z3-powered)
+This document maps Python 3.14 AST nodes to the portable IR, Protocol Buffer representation, and Rust IR types used by this project.
 
-![Python](https://img.shields.io/badge/python-3.14+-blue.svg)
-![Z3](https://img.shields.io/badge/Z3-SMT%20Solver-green.svg)
-![Status](https://img.shields.io/badge/status-experimental-orange.svg)
+The general pipeline is:
 
-This project implements Microsoft's Z3 SMT solver (https://www.microsoft.com/en-us/research/project/z3-3/).
-
-Ever ran into a simple runtime error hours into model training? If your error was related to linear algebra or oversights regarding Pytorch tensor dimensions, then this tool is for you!
-
-Torch Shape Checker is a static type checker written in Python which checks dimension validity on Pytorch tensors at compile-time instead of runtime. It does this by exploiting Python 3.14 type annotations, everything runs on vanilla Python 3.14. Because this runs on vanilla Python, implementing this tool in your programs is almost effortless, see below!
-
-## Why Z3
-
-Z3 is Microsoft's open source SMT solver. An SMT solver takes in a set constraints and outputs whether they are all feasible or not, which can surprisingly directly be applied to programming languages like Python. With Z3, this tool makes it possible for you to detect dimension mismatches on Pytorch tensors before encountering them hours into model training. 
-
-## Example of a regular Pytorch program
-
-```python
-n = 13
-m = 3
-k = 3
-
-A = torch.tensor([[1, 2, 3]])
-B = torch.tensor([[1, 2, 3]])
-
-C = torch.matmul(A, B)
+```text
+CPython AST
+    ↓
+Python IR
+    ↓
+Protocol Buffers
+    ↓
+Rust IR
 ```
 
+## Expressions
 
-## The same program, with annotations
+| Python AST | Python IR | Protobuf | Rust IR |
+|---|---|---|---|
+| `ast.Constant(bool)` | `BooleanIR` | `ExprIR.constant.bool_lit` | `ExprIR::Constant(ConstantIR::BooleanLit(...))` |
+| `ast.Constant(int)` | `IntegerIR` | `ExprIR.constant.integer_lit` | `ExprIR::Constant(ConstantIR::IntegerLit(...))` |
+| `ast.Constant(float)` | `FloatIR` | `ExprIR.constant.float_lit` | `ExprIR::Constant(ConstantIR::FloatLit(...))` |
+| `ast.Constant(str)` | `StringIR` | `ExprIR.constant.string_lit` | `ExprIR::Constant(ConstantIR::StringLit(...))` |
+| `ast.Constant(bytes)` | `BytesIR` | `ExprIR.constant.bytes_lit` | `ExprIR::Constant(ConstantIR::BytesLit(...))` |
+| `ast.Constant(complex)` | `ComplexIR` | `ExprIR.constant.complex_lit` | `ExprIR::Constant(ConstantIR::ComplexLit(...))` |
+| `ast.Constant(None)` | `NoneIR` | `ExprIR.constant.none_lit` | `ExprIR::Constant(ConstantIR::NoneLit(...))` |
+| `ast.Constant(Ellipsis)` | `EllipsisIR` | `ExprIR.constant.ellipsis_lit` | `ExprIR::Constant(ConstantIR::EllipsisLit(...))` |
+| `ast.Name` | `IdentifierIR` | `ExprIR.identifier` | `ExprIR::IdentifierExpr(...)` |
+| `ast.List` | `ListIR` | `ExprIR.list` | `ExprIR::ListExpr(...)` |
+| `ast.Tuple` | `TupleIR` | `ExprIR.tuple` | `ExprIR::TupleExpr(...)` |
+| `ast.Set` | `SetIR` | `ExprIR.set` | `ExprIR::SetExpr(...)` |
+| `ast.Dict` | `DictIR` | `ExprIR.dict` | `ExprIR::DictExpr(...)` |
+| `ast.Attribute` | `AttributeExprIR` | `ExprIR.attribute` | `ExprIR::AttributeExpr(...)` |
+| `ast.Subscript` | `SubscriptIR` | `ExprIR.subscript` | `ExprIR::SubscriptExpr(...)` |
+| `ast.Slice` | `SliceIR` | `ExprIR.slice` | `ExprIR::SliceExpr(...)` |
+| `ast.Call` | `CallExprIR` | `ExprIR.call` | `ExprIR::CallExpr(...)` |
+| `ast.BinOp` | `BinOpIR` | `ExprIR.binop` | `ExprIR::BinOpExpr(...)` |
+| `ast.UnaryOp` | `UnaryOpIR` | `ExprIR.unaryop` | `ExprIR::UnaryOpExpr(...)` |
+| `ast.BoolOp` | `BoolOpIR` | `ExprIR.boolop` | `ExprIR::BoolOpExpr(...)` |
+| `ast.Compare` | `CompareIR` | `ExprIR.compare` | `ExprIR::CompareExpr(...)` |
+| `ast.IfExp` | `IfExprIR` | `ExprIR.if_expr` | `ExprIR::IfExpr(...)` |
+| `ast.NamedExpr` | `NamedExprIR` | `ExprIR.named_expr` | `ExprIR::NamedExpr(...)` |
+| `ast.Starred` | `StarredIR` | `ExprIR.starred` | `ExprIR::StarredExpr(...)` |
+| `ast.Lambda` | `LambdaIR` | `ExprIR.lambda` | `ExprIR::Lambda(...)` |
+| `ast.ListComp` | `ListCompIR` | `ExprIR.list_comp` | `ExprIR::ListComp(...)` |
+| `ast.SetComp` | `SetCompIR` | `ExprIR.set_comp` | `ExprIR::SetComp(...)` |
+| `ast.DictComp` | `DictCompIR` | `ExprIR.dict_comp` | `ExprIR::DictComp(...)` |
+| `ast.GeneratorExp` | `GeneratorExprIR` | `ExprIR.generator_expr` | `ExprIR::GeneratorExpr(...)` |
+| `ast.Await` | `AwaitIR` | `ExprIR.await_expr` | `ExprIR::AwaitExpr(...)` |
+| `ast.Yield` | `YieldIR` | `ExprIR.yield_expr` | `ExprIR::YieldExpr(...)` |
+| `ast.YieldFrom` | `YieldFromIR` | `ExprIR.yield_from` | `ExprIR::YieldFromExpr(...)` |
+| `ast.JoinedStr` | `JoinedStrIR` | `ExprIR.joined_str` | `ExprIR::JoinedStr(...)` |
+| `ast.FormattedValue` | `FormattedValueIR` | `ExprIR.formatted_value` | `ExprIR::FormattedValue(...)` |
+| `ast.TemplateStr` | `TemplateStrIR` | `ExprIR.template_str` | `ExprIR::TemplateStr(...)` |
+| `ast.Interpolation` | `InterpolationIR` | `ExprIR.interpolation` | `ExprIR::Interpolation(...)` |
 
-```python
-n: int = 1
-m: int = 3
-k: int = 3
+## Statements
 
-A: torch.Tensor[n, m] = torch.tensor([[1, 2, 3]])  # the tool verifies (n, m) matches actual shape
-B: torch.Tensor[m, k] = torch.tensor([[1], [2], [3]]])
+| Python AST | Python IR | Protobuf | Rust IR |
+|---|---|---|---|
+| `ast.FunctionDef` | `FunctionDefIR` | `StmtIR.function_def` | `StmtIR::FunctionDef(...)` |
+| `ast.AsyncFunctionDef` | `AsyncFunctionDefIR` | `StmtIR.async_function_def` | `StmtIR::AsyncFunctionDef(...)` |
+| `ast.ClassDef` | `ClassDefIR` | `StmtIR.class_def` | `StmtIR::ClassDef(...)` |
+| `ast.Return` | `ReturnIR` | `StmtIR.return_stmt` | `StmtIR::Return(...)` |
+| `ast.Delete` | `DeleteIR` | `StmtIR.delete_stmt` | `StmtIR::Delete(...)` |
+| `ast.Assign` | `AssignIR` | `StmtIR.assign` | `StmtIR::Assign(...)` |
+| `ast.TypeAlias` | `TypeAliasIR` | `StmtIR.type_alias` | `StmtIR::TypeAlias(...)` |
+| `ast.AugAssign` | `AugAssignIR` | `StmtIR.aug_assign` | `StmtIR::AugAssign(...)` |
+| `ast.AnnAssign` | `AnnAssignIR` | `StmtIR.ann_assign` | `StmtIR::AnnAssign(...)` |
+| `ast.For` | `ForIR` | `StmtIR.for_stmt` | `StmtIR::For(...)` |
+| `ast.AsyncFor` | `AsyncForIR` | `StmtIR.async_for` | `StmtIR::AsyncFor(...)` |
+| `ast.While` | `WhileIR` | `StmtIR.while_stmt` | `StmtIR::While(...)` |
+| `ast.If` | `IfIR` | `StmtIR.if_stmt` | `StmtIR::If(...)` |
+| `ast.With` | `WithIR` | `StmtIR.with_stmt` | `StmtIR::With(...)` |
+| `ast.AsyncWith` | `AsyncWithIR` | `StmtIR.async_with` | `StmtIR::AsyncWith(...)` |
+| `ast.Match` | `MatchIR` | `StmtIR.match` | `StmtIR::Match(...)` |
+| `ast.Raise` | `RaiseIR` | `StmtIR.raise_stmt` | `StmtIR::Raise(...)` |
+| `ast.Try` | `TryIR` | `StmtIR.try_stmt` | `StmtIR::Try(...)` |
+| `ast.TryStar` | `TryStarIR` | `StmtIR.try_star_stmt` | `StmtIR::TryStar(...)` |
+| `ast.Assert` | `AssertIR` | `StmtIR.assert_stmt` | `StmtIR::Assert(...)` |
+| `ast.Import` | `ImportIR` | `StmtIR.import_stmt` | `StmtIR::Import(...)` |
+| `ast.ImportFrom` | `ImportFromIR` | `StmtIR.import_from` | `StmtIR::ImportFrom(...)` |
+| `ast.Global` | `GlobalIR` | `StmtIR.global_stmt` | `StmtIR::Global(...)` |
+| `ast.Nonlocal` | `NonlocalIR` | `StmtIR.nonlocal_stmt` | `StmtIR::Nonlocal(...)` |
+| `ast.Expr` | `ExprStmtIR` | `StmtIR.expr_stmt` | `StmtIR::Expr(...)` |
+| `ast.Pass` | `PassIR` | `StmtIR.pass_stmt` | `StmtIR::Pass(...)` |
+| `ast.Break` | `BreakIR` | `StmtIR.break_stmt` | `StmtIR::Break(...)` |
+| `ast.Continue` | `ContinueIR` | `StmtIR.continue_stmt` | `StmtIR::Continue(...)` |
 
-C: torch.Tensor[n, k] = torch.matmul(A, B)  # tool verifies A and B can be multiplied and (n, m) matches shape(A dot B)
+## Pattern Matching
 
-out -> VALID
+| Python AST | Python IR | Protobuf | Rust IR |
+|---|---|---|---|
+| `ast.MatchValue` | `ValuePatternIR` | `PatternIR.value_pattern` | `PatternIR::Value(...)` |
+| `ast.MatchSingleton` | `SingletonPatternIR` | `PatternIR.singleton_pattern` | `PatternIR::Singleton(...)` |
+| `ast.MatchSequence` | `SequencePatternIR` | `PatternIR.sequence_pattern` | `PatternIR::Sequence(...)` |
+| `ast.MatchMapping` | `MappingPatternIR` | `PatternIR.mapping_pattern` | `PatternIR::Mapping(...)` |
+| `ast.MatchClass` | `ClassPatternIR` | `PatternIR.class_pattern` | `PatternIR::Class(...)` |
+| `ast.MatchStar` | `StarPatternIR` | `PatternIR.star_pattern` | `PatternIR::Star(...)` |
+| `ast.MatchAs(pattern=None, name=<name>)` | `CapturePatternIR` | `PatternIR.capture_pattern` | `PatternIR::Capture(...)` |
+| `ast.MatchAs(pattern=None, name=None)` | `WildcardPatternIR` | `PatternIR.wildcard_pattern` | `PatternIR::Wildcard(...)` |
+| `ast.MatchAs(pattern=<pattern>, name=<name>)` | `AsPatternIR` | `PatternIR.as_pattern` | `PatternIR::As(...)` |
+| `ast.MatchOr` | `OrPatternIR` | `PatternIR.or_pattern` | `PatternIR::Or(...)` |
+
+## Helper AST Structures
+
+These CPython AST structures are not top-level expressions or statements, but are embedded inside other nodes.
+
+| Python AST | Python IR | Protobuf | Rust IR |
+|---|---|---|---|
+| `ast.comprehension` | `CompIR` | `CompIR` | `CompIR` |
+| `ast.withitem` | `WithItemIR` | `WithItemIR` | `WithItemIR` |
+| `ast.ExceptHandler` | `ExceptHandlerIR` | `ExceptHandlerIR` | `ExceptHandlerIR` |
+| `ast.keyword` | `KeywordArgIR` | `KeywordArgIR` | `KeywordArgIR` |
+| `ast.arguments` / `ast.arg` | `ParamIR` and parameter lowering | `ParamIR` | `ParamIR` |
+| `ast.match_case` | `MatchCaseIR` | `MatchCaseIR` | `MatchCaseIR` |
+
+## Type Parameters
+
+Python 3.14 generic syntax uses a separate AST family for type parameters.
+
+| Python AST | Python IR | Protobuf | Rust IR |
+|---|---|---|---|
+| `ast.TypeVar` | `TypeVarIR` | `TypeParamIR.type_var` | `TypeParamIR::TypeVar(...)` |
+| `ast.ParamSpec` | `ParamSpecIR` | `TypeParamIR.param_spec` | `TypeParamIR::ParamSpec(...)` |
+| `ast.TypeVarTuple` | `TypeVarTupleIR` | `TypeParamIR.type_var_tuple` | `TypeParamIR::TypeVarTuple(...)` |
+
+## Root Node
+
+For normal source-file parsing with `ast.parse(..., mode="exec")`:
+
+| Python AST | Python IR | Protobuf | Rust IR |
+|---|---|---|---|
+| `ast.Module` | `ProgramIR` | `ProgramIR` | `ProgramIR` |
+
+`ProgramIR` is intentionally richer than `ast.Module`. In addition to the lowered syntax tree, it may contain portable metadata such as file identity, declarations, bindings, and lexical scope information.
+
+## Normalizations
+
+The IR is not intended to preserve every CPython implementation detail literally. Some structures are normalized into representations that are easier to consume across languages.
+
+### Constants
+
+CPython represents literals through `ast.Constant`. The portable IR refines these into strongly typed constant variants:
+
+```text
+ast.Constant
+    ↓
+ConstantIR
+    ├── IntegerIR
+    ├── FloatIR
+    ├── StringIR
+    ├── BooleanIR
+    ├── BytesIR
+    ├── ComplexIR
+    ├── NoneIR
+    └── EllipsisIR
 ```
 
-This tool uses the Z3 SMT solver to collect integer types, and tensor type hints, and enforces the applicable rules for tensor declarations and linear algebra operations at compile-time. This means you do not need to run your code to discover subtle errors, the tool detects your mistakes and reports them to you. Check the following example and output:
+For example, Python's native `complex` object is serialized as explicit real and imaginary components:
 
-```python
-n: int = 1
-m: int = 3
-k: int = 1
-
-A: torch.Tensor[n, m] = torch.tensor([[1, 2, 3, 4]])  # A's type annotation and its actual shape differ
-B: torch.Tensor[m, k] = torch.randn(3, 1)
-
-C: torch.Tensor[n, k] = torch.matmul(A, B)
-
-out -> DeclarationError: tensor A was declared with shape(rows=1, cols=4), but expected shape(rows=1, cols=3)
+```text
+complex(3.0, 4.0)
+    ↓
+ComplexIR {
+    real: 3.0,
+    imag: 4.0
+}
 ```
 
-# Tool architecture
+### MatchAs
 
-1. Python source code is converted to an AST using Python's _ast_ module
-2. A custom visitor walks the AST and transforms integral dimensions and nodes containing tensors into an IR representing types and shapes
-3. A Z3 wrapper completes a pass on the IR and applies constraints based on types and linear algebra rules
-4. The program informs the user whether they made any dimension errors or not
+CPython overloads `ast.MatchAs` to represent several distinct language concepts. The portable IR separates them:
 
-```mermaid
-%%{init: {"flowchart": {"curve": "stepAfter", "nodeSpacing": 40, "rankSpacing": 55}}}%%
-flowchart TB
-    A["Python Source Code"]
-    B["Python AST"]
-    C["Python IR Builder"]
-    D["Python IR Objects"]
+```text
+MatchAs(pattern=None, name="x")
+    → CapturePatternIR
 
-    E["Protobuf Messages"]
-    F["Serialized .pb Files"]
+MatchAs(pattern=None, name=None)
+    → WildcardPatternIR
 
-    G["Prost-Generated Rust Types"]
-    H["Rust PBDecoder"]
-    I["Rust Semantic IR"]
-
-    J["Z3 Constraint Layer"]
-    K{"SAT?"}
-    L["Valid Program State"]
-    M["Invalid Path / Error"]
-
-    A --> B
-    B --> C
-    C --> D
-    D -->|"Serialize"| E
-    E --> F
-    F -->|"Deserialize"| G
-    G --> H
-    H --> I
-    I --> J
-    J --> K
-    K -->|SAT| L
-    K -->|UNSAT| M
-
-    classDef source fill:#2d3436,color:#fff,stroke:#636e72
-    classDef python fill:#6c5ce7,color:#fff,stroke:#4834d4
-    classDef proto fill:#e17055,color:#fff,stroke:#c05640
-    classDef rust fill:#00b894,color:#fff,stroke:#019875
-    classDef solver fill:#0984e3,color:#fff,stroke:#0767b1
-    classDef decision fill:#b2bec3,color:#2d3436,stroke:#636e72
-    classDef valid fill:#00cec9,color:#fff,stroke:#00a8a8
-    classDef invalid fill:#d63031,color:#fff,stroke:#a61e1e
-
-    class A source
-    class B,C,D python
-    class E,F proto
-    class G,H,I rust
-    class J solver
-    class K decision
-    class L valid
-    class M invalid
+MatchAs(pattern=<pattern>, name="x")
+    → AsPatternIR
 ```
 
-# How to use
+### Formatted and Template Strings
 
-## Install dependencies
+F-string components remain expressions:
 
-You only need Python 3.14+ and Z3 to run the tool, Pytorch is required only to execute your code
-
-```bash
-python3.14 -m pip install z3-solver torch
-pip install z3-solver
-```
-## Run the tool
-
-```bash
-torchdimchecker **your_file** --verbose
+```text
+JoinedStrIR.values: list[ExprIR]
 ```
 
-# What is currently supported
+The valid values produced by the Python frontend are normally:
 
-```python
-torch.matmul
-torch.tensor
-torch.randn
+```text
+ConstantIR::String
+FormattedValueIR
 ```
 
+Python 3.14 template strings use the same general abstraction:
+
+```text
+TemplateStrIR.values: list[ExprIR]
+```
+
+with interpolated portions represented through `InterpolationIR`.
+
+## Semantic Metadata
+
+Some project IR types do not correspond directly to CPython AST constructors.
+
+Examples include:
+
+```text
+ProgramIR
+DeclIR
+BindingIR
+ScopeIR
+scope_id
+use_scope_id
+```
+
+These are semantic enrichments derived from the AST for downstream compiler and static-analysis work.
+
+For example, CPython has separate nodes such as:
+
+```text
+ast.FunctionDef
+ast.AsyncFunctionDef
+ast.ClassDef
+ast.Assign
+ast.AnnAssign
+```
+
+while the semantic layer may additionally classify declaration-producing constructs through `DeclIR`.
+
+The original statement IR is still preserved; `DeclIR` is additional metadata rather than a replacement for the syntax tree.
