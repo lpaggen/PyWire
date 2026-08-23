@@ -320,81 +320,100 @@ message IfExprIR {
   optional SourceSpan span = 4;
 }
 
+message ComplexIR {
+  double real = 1;
+  double imag = 2;
+  SourceSpan span = 3;
+}
+
 message CompIR {
   ExprIR target = 1;
   ExprIR iterable = 2;
   repeated ExprIR ifs = 3;
   bool is_async = 4;
-  SourceSpan span = 5;
+  optional SourceSpan span = 5;
 }
 
 message ListCompIR {
   ExprIR elt = 1;
   repeated CompIR generators = 2;
-  SourceSpan span = 3;
+  optional SourceSpan span = 3;
 }
 
 message SetCompIR {
   ExprIR elt = 1;
   repeated CompIR generators = 2;
-  SourceSpan span = 3;
+  optional SourceSpan span = 3;
 }
 
 message DictCompIR {
   ExprIR key = 1;
   ExprIR value = 2;
   repeated CompIR generators = 3;
-  SourceSpan span = 4;
-}
-
-message GeneratorExprIR {
-  ExprIR elt = 1;
-  repeated CompIR generators = 2;
-  SourceSpan span = 3;
+  optional SourceSpan span = 4;
 }
 
 message FormattedValueIR {
   ExprIR value = 1;
   int32 conversion = 2;
   JoinedStrIR format_spec = 3;
-  SourceSpan span = 4;
+  optional SourceSpan span = 4;
 }
 
 message JoinedStrIR {
   repeated ExprIR values = 1;
-  SourceSpan span = 2;
+  optional SourceSpan span = 2;
+}
+
+message GeneratorExprIR {
+  ExprIR elt = 1;
+  repeated CompIR generators = 2;
+  optional SourceSpan span = 3;
+}
+
+message BytesIR {
+  repeated int32 value = 1;
+  optional SourceSpan span = 2;
+}
+
+message ConstantIR {
+  oneof kind {
+    IntegerIR integer_lit = 1;
+    FloatIR float_lit = 2;
+    StringIR string_lit = 3;
+    BooleanIR bool_lit = 4;
+    NoneIR none_lit = 5;
+    EllipsisIR ellipsis_lit = 6;
+    ComplexIR complex_lit = 7;
+    BytesIR bytes_lit = 8;
+  }
 }
 
 message ExprIR {
   oneof kind {
-    IdentifierIR identifier = 1;
-    IntegerIR integer = 2;
-    FloatIR float_lit = 3;
-    StringIR string_lit = 4;
-    BooleanIR bool_lit = 5;
-    NoneIR none_lit = 6;
-    ListIR list = 7;
-    TupleIR tuple = 8;
-    CallExprIR call = 9;
-    AttributeExprIR attribute = 10;
-    BinOpIR binop = 11;
-    UnaryOpIR unaryop = 12;
-    BoolOpIR boolop = 13;
-    CompareIR compare = 14;
-    SubscriptIR subscript = 15;
-    SliceIR slice = 16;
-    EllipsisIR ellipsis = 17;
-    DictIR dict = 18;
-    SetIR set = 19;
-    IfExprIR if_expr = 20;
-    StarredIR starred = 21;
-    NamedExprIR named_expr = 22;
-    ListCompIR list_comp = 23;
-    SetCompIR set_comp = 24;
-    DictCompIR dict_comp = 25;
-    GeneratorExprIR generator_expr = 26;
-    JoinedStrIR joined_str = 27;
-    FormattedValueIR formatted_value = 28;
+    ConstantIR constant = 1;
+    IdentifierIR identifier = 2;
+    ListIR list = 3;
+    TupleIR tuple = 4;
+    CallExprIR call = 5;
+    AttributeExprIR attribute = 6;
+    BinOpIR binop = 7;
+    UnaryOpIR unaryop = 8;
+    BoolOpIR boolop = 9;
+    CompareIR compare = 10;
+    SubscriptIR subscript = 11;
+    SliceIR slice = 12;
+    DictIR dict = 13;
+    SetIR set = 14;
+    IfExprIR if_expr = 15;
+    StarredIR starred = 16;
+    NamedExprIR named_expr = 17;
+    ListCompIR list_comp = 18;
+    SetCompIR set_comp = 19;
+    DictCompIR dict_comp = 20;
+    GeneratorExprIR generator_expr = 21;
+    JoinedStrIR joined_str = 22;
+    FormattedValueIR formatted_value = 23;
   }
 }
 

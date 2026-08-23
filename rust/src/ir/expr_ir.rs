@@ -1,13 +1,11 @@
-use crate::ir::nodes::{AttributeExprIR, BinOpIR, BoolOpIR, BooleanIR, CallExprIR, CompareIR, DictIR, EllipsisIR, FloatIR, IdentifierIR, IfExprIR, IntegerIR, ListIR, NamedExprIR, NoneIR, SetIR, SliceIR, StarredIR, StringIR, SubscriptIR, TupleIR, UnaryOpIR};
+use crate::ir::nodes::{AttributeExprIR, BinOpIR, BoolOpIR, BooleanIR, BytesIR, CallExprIR, CompareIR, ComplexIR, DictCompIR, DictIR, EllipsisIR, FloatIR, FormattedValueIR, GeneratorExprIR, IdentifierIR, IfExprIR, IntegerIR, JoinedStrIR, ListCompIR, ListIR, NamedExprIR, NoneIR, SetCompIR, SetIR, SliceIR, StarredIR, StringIR, SubscriptIR, TupleIR, UnaryOpIR};
 
 #[derive(Debug, Clone)]
 pub enum ExprIR {
+    Constant(ConstantIR),
     IdentifierExpr(IdentifierIR),
-    IntegerExpr(IntegerIR),
-    FloatExpr(FloatIR),
-    BoolExpr(BooleanIR),
-    StringExpr(StringIR),
-    NoneExpr(NoneIR),
+    JoinedStr(JoinedStrIR),
+    FormattedValue(FormattedValueIR),
 
     ListExpr(ListIR),
     TupleExpr(TupleIR),
@@ -22,11 +20,26 @@ pub enum ExprIR {
     UnaryOpExpr(UnaryOpIR),
     CompareExpr(CompareIR),
     CallExpr(CallExprIR),
-    NamedExpr(NamedExprIR),
+    NamedExpr(NamedExprIR),  // := , named NamedExpr in Python for some reason
 
     IfExpr(IfExprIR),
 
-    StarredExpr(StarredIR),
+    GeneratorExpr(GeneratorExprIR),
+    ListComp(ListCompIR),
+    DictComp(DictCompIR),
+    SetComp(SetCompIR),
 
-    EllipsisExpr(EllipsisIR),
+    StarredExpr(StarredIR),
+}
+
+#[derive(Debug, Clone)]
+pub enum ConstantIR {
+    IntegerLit(IntegerIR),
+    FloatLit(FloatIR),
+    StringLit(StringIR),
+    BooleanLit(BooleanIR),
+    BytesLit(BytesIR),
+    ComplexLit(ComplexIR),
+    NoneLit(NoneIR),
+    EllipsisLit(EllipsisIR),
 }

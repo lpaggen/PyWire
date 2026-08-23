@@ -16,4 +16,12 @@ class BooleanIR(ConstantIR):
         return "true" if self.value is True else "false"
 
     def to_proto(self):
-        return _pb2.ExprIR(bool_lit=_pb2.BooleanIR(value=self.value))
+        return _pb2.ExprIR(
+            constant=_pb2.ConstantIR(
+                bool_lit=_pb2.BooleanIR(
+                    value=self.value,
+                    span=self.span.to_proto(),
+                )
+            )
+        )
+

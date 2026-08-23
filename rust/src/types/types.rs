@@ -7,8 +7,8 @@ pub enum Type {
     Int,
     Float,
     Bool,
-    Bytes,  // frontend TODO
-    Complex,  // TODO add in frontend
+    Bytes,
+    Complex,
     String,
     None,
     Tuple(Vec<Type>),
@@ -18,6 +18,7 @@ pub enum Type {
     Dim(DimType),
     Union(Vec<Type>),  // represent if-else-then branches, where variable types depend on conditions 
     //Module(ModuleType),
+    Ellipsis,
     Unknown, // may be a valid type, we just don't consider it in this tool
 }
 

@@ -4,6 +4,7 @@ use crate::diagnostic::diagnostic::Diagnostic;
 use crate::diagnostic::diagnostic::DiagnosticKind;
 use crate::diagnostic::diagnostic::Severity;
 
+use crate::ir::expr_ir::ConstantIR;
 use crate::ir::expr_ir::ExprIR;
 use crate::ir::nodes::BindingIR;
 use crate::ir::nodes::binding_ir::BindingKind;
@@ -57,11 +58,14 @@ impl SymbolTypeTable {
                     }
                 };
                 match value {
-                    ExprIR::IntegerExpr(_) => Type::Int,
-                    ExprIR::FloatExpr(_) => Type::Float,
-                    ExprIR::BoolExpr(_) => Type::Bool,
-                    ExprIR::StringExpr(_) => Type::String,
-                    ExprIR::NoneExpr(_) => Type::None,
+                    ExprIR::Constant(ConstantIR::IntegerLit(_)) => Type::Int,
+                    ExprIR::Constant(ConstantIR::FloatLit(_)) => Type::Float,
+                    ExprIR::Constant(ConstantIR::BooleanLit(_)) => Type::Bool,
+                    ExprIR::Constant(ConstantIR::StringLit(_)) => Type::String,
+                    ExprIR::Constant(ConstantIR::NoneLit(_)) => Type::None,
+                    ExprIR::Constant(ConstantIR::EllipsisLit(_)) => Type::Ellipsis,
+                    ExprIR::Constant(ConstantIR::BytesLit(_)) => Type::Bytes,
+                    ExprIR::Constant(ConstantIR::ComplexLit(_)) => Type::Complex,
                     _ => Type::Unknown,  // what we cannot resolve directly gets an Unknown type, we will resolve it later.
                 }
             },

@@ -9,13 +9,13 @@ from generated import _pb2
 @dataclass
 class NoneIR(ConstantIR):
     value: None
-    span: SourceSpan
+    span: SourceSpan | None
 
     def to_proto(self):
-        proto = _pb2.NoneIR()
-        if self.span is not None:
-            proto.span.CopyFrom(self.span.to_proto())
-
-        expr = _pb2.ExprIR()
-        expr.none_lit.CopyFrom(proto)
-        return expr
+        return _pb2.ExprIR(
+            constant=_pb2.ConstantIR(
+                none_lit=_pb2.NoneIR(
+                    span=self.span.to_proto(),
+                )
+            )
+        )

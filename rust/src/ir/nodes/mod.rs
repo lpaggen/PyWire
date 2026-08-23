@@ -36,7 +36,16 @@ pub mod set_ir;
 pub mod dict_ir;
 pub mod starred_ir;
 pub mod walrus_ir;
+pub mod generatorexpr_ir;
+pub mod comprehension_ir;
+pub mod joinedstr_ir;
+pub mod complex_ir;
+pub mod bytes_ir;
 
+pub use bytes_ir::BytesIR;
+pub use complex_ir::ComplexIR;
+pub use joinedstr_ir::{FormattedValueIR, JoinedStrIR};
+pub use comprehension_ir::{CompIR, SetCompIR, DictCompIR, GeneratorExprIR, ListCompIR};
 pub use walrus_ir::NamedExprIR;
 pub use starred_ir::StarredIR;
 pub use set_ir::SetIR;

@@ -9,9 +9,9 @@ from dataclasses import dataclass
 # TODO double check if we need this inside .proto
 class Conversion(IntEnum):
     NONE = -1
-    STR = ord("s")
-    REPR = ord("r")
-    ASCII = ord("a")
+    STR = ord("s")  # 115
+    REPR = ord("r")  # 114
+    ASCII = ord("a")  # 97
 
 
 @dataclass
@@ -27,7 +27,7 @@ class FormattedValueIR(ExprIR):
                 value=self.value.to_proto(),
                 conversion=int(self.conversion),
                 format_spec=(
-                    self.format_spec.to_proto()
+                    self.format_spec.to_proto().joined_str
                     if self.format_spec is not None
                     else None
                 ),
@@ -38,7 +38,7 @@ class FormattedValueIR(ExprIR):
 
 @dataclass
 class JoinedStrIR(ExprIR):
-    values: list[FormattedValueIR | ConstantIR]
+    values: list[ExprIR]  # should hold Constant or FormattedValue, but both are ExprIR 
     span: SourceSpan
 
     def to_proto(self):

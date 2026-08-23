@@ -15,4 +15,11 @@ class FloatIR(ConstantIR):
         return str(self.value)
 
     def to_proto(self):
-        return _pb2.ExprIR(float_lit=_pb2.FloatIR(value=self.value))
+        return _pb2.ExprIR(
+            constant=_pb2.ConstantIR(
+                float_lit=_pb2.FloatIR(
+                    value=self.value,
+                    span=self.span.to_proto(),
+                )
+            )
+        )

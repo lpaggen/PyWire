@@ -15,4 +15,11 @@ class IntegerIR(ConstantIR):
         return str(self.value)
 
     def to_proto(self):
-        return _pb2.ExprIR(integer=_pb2.IntegerIR(value=self.value))
+        return _pb2.ExprIR(
+            constant=_pb2.ConstantIR(
+                integer_lit=_pb2.IntegerIR(
+                    value=self.value,
+                    span=self.span.to_proto(),
+                )
+            )
+        )

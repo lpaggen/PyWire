@@ -2,6 +2,7 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
+use crate::ir::expr_ir::ConstantIR;
 use crate::ir::nodes::annotation_ir::AnnotationHeadIR;
 use crate::ir::nodes::dict_ir::DictEntryIR;
 use crate::ir::nodes::match_ir::MatchCaseIR;
@@ -20,9 +21,9 @@ use crate::ir::nodes::symbol_ir::SymbolIR;
 use crate::ir::nodes::*;
 use crate::ir::{expr_ir::ExprIR, operator::Operator, span_ir::SourceSpan, stmt_ir::StmtIR};
 use crate::pb;
-use crate::pb::ParamKind;
 
 use prost::Message;
+use prost::bytes::Bytes;
 
 pub struct PBDecoder {
     pub path: PathBuf,
@@ -765,6 +766,80 @@ impl PBDecoder {
         }
     }
 
+    fn convert_comprehension(comp: &pb::CompIr) -> Result<CompIR, Box<dyn std::error::Error>> {
+        Ok(CompIR {
+            target: Box::new(Self::convert_expr(
+                comp.target
+                    .as_ref()
+                    .ok_or("comprehension has no target")?
+            )?),
+
+            iterable: Box::new(Self::convert_expr(
+                comp.iterable
+                    .as_ref()
+                    .ok_or("comprehension has no iterable")?
+            )?),
+
+            ifs: comp
+                .ifs
+                .iter()
+                .map(Self::convert_expr)
+                .collect::<Result<Vec<_>, _>>()?,
+
+            is_async: comp.is_async,
+
+            span: Self::convert_optional_span(&comp.span),
+        })
+    }
+
+    fn convert_format_spec(
+        spec: &pb::JoinedStrIr,
+    ) -> Result<JoinedStrIR, Box<dyn std::error::Error>> {
+        Ok(JoinedStrIR {
+            values: spec
+                .values
+                .iter()
+                .map(Self::convert_expr)
+                .collect::<Result<Vec<_>, _>>()?,
+            span: Self::convert_optional_span(&spec.span),
+        })
+    }
+
+    fn convert_generator(comp: &pb::CompIr) -> Result<CompIR, Box<dyn std::error::Error>> {
+        let target: Box<ExprIR> = Box::new(
+            Self::convert_expr(
+                comp.target
+                    .as_ref()
+                    .ok_or("comprehension has no target")?
+            )?
+        );
+
+        let iterable: Box<ExprIR> = Box::new(
+            Self::convert_expr(
+                comp.iterable
+                    .as_ref()
+                    .ok_or("comprehension has no iterable")?
+            )?
+        );
+
+        let mut ifs: Vec<ExprIR> = Vec::new();
+        for expr in &comp.ifs {
+            ifs.push(Self::convert_expr(expr)?);
+        }
+
+        let is_async: bool = comp.is_async;
+
+        let span: Option<SourceSpan> = Self::convert_optional_span(&comp.span);
+
+        Ok(CompIR {
+            target,
+            iterable,
+            ifs,
+            is_async,
+            span
+        })
+    }
+
     fn convert_expr(expr: &pb::ExprIr) -> Result<ExprIR, Box<dyn std::error::Error>> {
         match &expr.kind {
             Some(pb::expr_ir::Kind::Identifier(identifier)) => {
@@ -772,6 +847,56 @@ impl PBDecoder {
                     name: identifier.name.clone(),
                     use_scope_id: identifier.use_scope_id,
                     span: Self::convert_optional_span(&identifier.span),
+                }))
+            },
+
+            Some(pb::expr_ir::Kind::FormattedValue(formattedvalue_ir)) => {
+                let value: Box<ExprIR> = Box::new(
+                    Self::convert_expr(
+                        formattedvalue_ir.value
+                            .as_deref()
+                            .ok_or("sure")?
+                        )?
+                    );
+
+                let span = match &formattedvalue_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                let format_spec = match &formattedvalue_ir.format_spec {
+                    Some(spec) => Some(Self::convert_format_spec(spec)?),
+                    None => None,
+                };
+
+                let conversion = joinedstr_ir::Conversion::try_from(
+                    formattedvalue_ir.conversion
+                )?;
+
+                Ok(ExprIR::FormattedValue(FormattedValueIR { 
+                    value,
+                    conversion,
+                    format_spec, 
+                    span })
+                )
+            },
+
+            Some(pb::expr_ir::Kind::JoinedStr(joinedstr_ir)) => {
+                let mut values: Vec<ExprIR> = Vec::new();
+                for value in &joinedstr_ir.values {
+                    values.push(
+                        Self::convert_expr(value)?
+                    );
+                }
+
+                let span = match &joinedstr_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(ExprIR::JoinedStr(JoinedStrIR {
+                    values,
+                    span,
                 }))
             },
 
@@ -858,6 +983,104 @@ impl PBDecoder {
                 }))
             }
 
+            Some(pb::expr_ir::Kind::ListComp(listcomp_ir)) => {
+                let elt = match &listcomp_ir.elt {
+                    Some(expr) => Self::convert_expr(expr)?,
+                    None => return Err("list comprehension expression has no elt".into()),
+                };
+
+                let mut generators: Vec<CompIR> = Vec::new();
+                for comp in &listcomp_ir.generators {
+                    generators.push(Self::convert_generator(comp)?)
+                }
+
+                let span = match &listcomp_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(ExprIR::ListComp(ListCompIR { 
+                    elt: Box::new(elt), 
+                    generators, 
+                    span 
+                }))
+            },
+
+            Some(pb::expr_ir::Kind::SetComp(setcomp_ir)) => {
+                let elt = match &setcomp_ir.elt {
+                    Some(expr) => Self::convert_expr(expr)?,
+                    None => return Err("set comprehension expression has no elt".into()),
+                };
+
+                let mut generators: Vec<CompIR> = Vec::new();
+                for comp in &setcomp_ir.generators {
+                    generators.push(Self::convert_generator(comp)?)
+                }
+
+                let span = match &setcomp_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(ExprIR::SetComp(SetCompIR { 
+                    elt: Box::new(elt), 
+                    generators, 
+                    span 
+                }))
+            },
+
+            Some(pb::expr_ir::Kind::GeneratorExpr(generatorexpr_ir)) => {
+                let elt = match &generatorexpr_ir.elt {
+                    Some(expr) => Self::convert_expr(expr)?,
+                    None => return Err("generator expression has no elt".into()),
+                };
+
+                let mut generators: Vec<CompIR> = Vec::new();
+                for comp in &generatorexpr_ir.generators {
+                    generators.push(Self::convert_generator(comp)?)
+                }
+
+                let span = match &generatorexpr_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(ExprIR::GeneratorExpr(GeneratorExprIR { 
+                    elt: Box::new(elt), 
+                    generators, 
+                    span 
+                }))
+            },
+
+            Some(pb::expr_ir::Kind::DictComp(dictcomp_ir)) => {
+                let key = match &dictcomp_ir.key {
+                    Some(expr) => Self::convert_expr(expr)?,
+                    None => return Err("dict comprehension expression has no key".into()),
+                };
+
+                let value = match &dictcomp_ir.value {
+                    Some(expr) => Self::convert_expr(expr)?,
+                    None => return Err("dict comprehension expression has no value".into()),
+                };
+
+                let mut generators: Vec<CompIR> = Vec::new();
+                for comp in &dictcomp_ir.generators {
+                    generators.push(Self::convert_generator(comp)?)
+                }
+
+                let span = match &dictcomp_ir.span {
+                    Some(span) => Some(Self::convert_span(span)),
+                    None => None,
+                };
+
+                Ok(ExprIR::DictComp(DictCompIR { 
+                    key: Box::new(key),
+                    value: Box::new(value),
+                    generators, 
+                    span 
+                }))
+            },
+
             Some(pb::expr_ir::Kind::IfExpr(if_expr_ir)) => {
                 let test = match &if_expr_ir.test {
                     Some(expr) => Self::convert_expr(expr)?,
@@ -887,33 +1110,85 @@ impl PBDecoder {
                 }))
             },
 
-            Some(pb::expr_ir::Kind::Ellipsis(ellipsis)) => Ok(ExprIR::EllipsisExpr(EllipsisIR { 
-                span: Self::convert_optional_span(&ellipsis.span),
-            })),
+            Some(pb::expr_ir::Kind::Constant(constant)) => {
+                match constant.kind.as_ref() {
+                    Some(pb::constant_ir::Kind::EllipsisLit(ellipsis)) => {
+                        Ok(ExprIR::Constant(
+                            ConstantIR::EllipsisLit(EllipsisIR {
+                                span: Self::convert_optional_span(&ellipsis.span),
+                            })
+                        ))
+                    },
 
-            Some(pb::expr_ir::Kind::Integer(integer)) => Ok(ExprIR::IntegerExpr(IntegerIR {
-                value: integer.value,
-                span: Self::convert_optional_span(&integer.span),
-            })),
+                    Some(pb::constant_ir::Kind::IntegerLit(integer)) => {
+                        Ok(ExprIR::Constant(
+                            ConstantIR::IntegerLit(IntegerIR {
+                                value: integer.value,
+                                span: Self::convert_optional_span(&integer.span),
+                            })
+                        ))
+                    },
 
-            Some(pb::expr_ir::Kind::FloatLit(float_lit)) => Ok(ExprIR::FloatExpr(FloatIR {
-                value: float_lit.value,
-                span: Self::convert_optional_span(&float_lit.span),
-            })),
+                    Some(pb::constant_ir::Kind::FloatLit(float_lit)) => {
+                        Ok(ExprIR::Constant(
+                            ConstantIR::FloatLit(FloatIR {
+                                value: float_lit.value,
+                                span: Self::convert_optional_span(&float_lit.span),
+                            })
+                        ))
+                    },
 
-            Some(pb::expr_ir::Kind::StringLit(string_lit)) => Ok(ExprIR::StringExpr(StringIR {
-                value: string_lit.value.clone(),
-                span: Self::convert_optional_span(&string_lit.span),
-            })),
+                    Some(pb::constant_ir::Kind::StringLit(string_lit)) => {
+                        Ok(ExprIR::Constant(
+                            ConstantIR::StringLit(StringIR {
+                                value: string_lit.value.clone(),
+                                span: Self::convert_optional_span(&string_lit.span),
+                            })
+                        ))
+                    },
 
-            Some(pb::expr_ir::Kind::BoolLit(bool_lit)) => Ok(ExprIR::BoolExpr(BooleanIR {
-                value: bool_lit.value,
-                span: Self::convert_optional_span(&bool_lit.span),
-            })),
+                    Some(pb::constant_ir::Kind::BoolLit(bool_lit)) => {
+                        Ok(ExprIR::Constant(
+                            ConstantIR::BooleanLit(BooleanIR {
+                                value: bool_lit.value,
+                                span: Self::convert_optional_span(&bool_lit.span),
+                            })
+                        ))
+                    },
 
-            Some(pb::expr_ir::Kind::NoneLit(_none_lit)) => Ok(ExprIR::NoneExpr(NoneIR {
-                span: Self::convert_optional_span(&_none_lit.span),
-            })),
+                    Some(pb::constant_ir::Kind::NoneLit(none_lit)) => {
+                        Ok(ExprIR::Constant(
+                            ConstantIR::NoneLit(NoneIR {
+                                span: Self::convert_optional_span(&none_lit.span),
+                            })
+                        ))
+                    },
+
+                    Some(pb::constant_ir::Kind::ComplexLit(complex_lit)) => {
+                        Ok(ExprIR::Constant(
+                            ConstantIR::ComplexLit(ComplexIR {
+                                real: complex_lit.real,
+                                imag: complex_lit.imag,
+                                span: Self::convert_optional_span(&complex_lit.span),
+                            })
+                        ))
+                    },
+
+                    Some(pb::constant_ir::Kind::BytesLit(bytes_lit)) => {
+                        Ok(ExprIR::Constant(
+                            ConstantIR::BytesLit(BytesIR { 
+                                value: bytes_lit.value
+                                    .iter()
+                                    .map(|&x| u8::try_from(x))
+                                    .collect::<Result<Vec<_>, _>>()?,
+                                span: Self::convert_optional_span(&bytes_lit.span),
+                            }
+                        )))
+                    },
+
+                    None => Err("constant has no kind".into()),
+                }
+            },
 
             Some(pb::expr_ir::Kind::List(list)) => {
                 let mut elements: Vec<ExprIR> = Vec::new();

@@ -2,7 +2,7 @@ import ast
 
 from ir.bytes_ir import BytesIR
 from ir.complex_ir import ComplexIR
-from ir.comprehension_ir import CompIR, ListCompIR, SetCompIR
+from ir.comprehension_ir import CompIR, DictCompIR, GeneratorExprIR, ListCompIR, SetCompIR
 from ir.dict_ir import DictEntryIR, DictIR
 from ir.expr_ir import ExprIR
 from ir.fstring_ir import Conversion, FormattedValueIR, JoinedStrIR
@@ -784,9 +784,11 @@ class SemanticBuilder(ast.NodeVisitor):
                     span=SourceSpan.span(node, self.file_path),
                 )
 
+            # could use "complex" but Rust doesn't support it, this is the same thing
             if isinstance(node.value, complex):
                 return ComplexIR(
-                    value=node.value,
+                    real=node.value.real,
+                    imag=node.value.imag,
                     span=SourceSpan.span(node, self.file_path),
                 )
 
@@ -834,7 +836,7 @@ class SemanticBuilder(ast.NodeVisitor):
             )
 
         if isinstance(node, ast.DictComp):
-            return SetCompIR(
+            return DictCompIR(
                 key=self.parse_expr(node.key),
                 value=self.parse_expr(node.value),
                 generators=[self.parse_comp(c) for c in node.generators],
@@ -904,6 +906,13 @@ class SemanticBuilder(ast.NodeVisitor):
                     for key, value in zip(node.keys, node.values)
                 ],
                 span=SourceSpan.span(node, self.file_path),
+            )
+
+        if isinstance(node, ast.GeneratorExp):
+            return GeneratorExprIR(
+                elt=self.parse_expr(node.elt),
+                generators=[self.parse_comp(comp) for comp in node.generators],
+                span=SourceSpan.span(node, self.file_path)
             )
 
         if isinstance(node, ast.Attribute):
@@ -984,14 +993,5 @@ class SemanticBuilder(ast.NodeVisitor):
                 step=self.parse_expr(node.step) if node.step else None,
                 span=SourceSpan.span(node, self.file_path),
             )
-
-        if isinstance(node, ast.JoinedStr):
-            return StringIR(
-                value="",  # placeholder for ignored f-string content
-                span=SourceSpan.span(node, self.file_path),
-            )
-
-        # if node is None:
-        #     return NoneIR(span=SourceSpan.span(node, self.file_path))
 
         raise NotImplementedError(f"Unsupported expression node: {type(node).__name__}")
