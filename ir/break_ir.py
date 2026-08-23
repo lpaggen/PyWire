@@ -1,0 +1,17 @@
+from dataclasses import dataclass
+
+from common.span import SourceSpan
+from generated import _pb2
+from ir.stmt_ir import StmtIR
+
+
+@dataclass
+class BreakIR(StmtIR):
+    span: SourceSpan
+
+    def to_proto(self):
+        return _pb2.StmtIR(
+            break_stmt=_pb2.BreakIR(
+                span=self.span.to_proto(),
+            )
+        )

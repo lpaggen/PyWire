@@ -521,8 +521,348 @@ impl PBDecoder {
         })
     }
 
+    fn convert_with_item(
+        item: &pb::WithItemIr,
+    ) -> Result<WithItemIR, Box<dyn std::error::Error>> {
+        let context_expr = item
+            .context_expr
+            .as_ref()
+            .ok_or("with item has no context expression")?;
+
+        let optional_vars = item
+            .optional_vars
+            .as_ref()
+            .map(Self::convert_expr)
+            .transpose()?;
+
+        Ok(WithItemIR {
+            context_expr: Self::convert_expr(context_expr)?,
+            optional_vars,
+        })
+    }
+
+
+    fn convert_except_handler(
+        handler: &pb::ExceptHandlerIr,
+    ) -> Result<ExceptHandlerIR, Box<dyn std::error::Error>> {
+        let exception_type = handler
+            .r#type
+            .as_ref()
+            .map(Self::convert_expr)
+            .transpose()?;
+
+        let body = handler
+            .body
+            .iter()
+            .map(Self::convert_stmt)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(ExceptHandlerIR {
+            exception_type,
+            name: handler.name.clone(),
+            body,
+            span: Self::convert_optional_span(&handler.span),
+        })
+    }
+
     fn convert_stmt(stmt: &pb::StmtIr) -> Result<StmtIR, Box<dyn std::error::Error>> {
         match &stmt.kind {
+            Some(pb::stmt_ir::Kind::DeleteStmt(delete_ir)) => {
+                let targets = delete_ir
+                    .targets
+                    .iter()
+                    .map(Self::convert_expr)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(StmtIR::Delete(DeleteIR {
+                    targets,
+                    span: Self::convert_optional_span(&delete_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::AssertStmt(assert_ir)) => {
+                let test = assert_ir
+                    .test
+                    .as_ref()
+                    .ok_or("assert statement has no test")?;
+
+                let msg = assert_ir
+                    .msg
+                    .as_ref()
+                    .map(Self::convert_expr)
+                    .transpose()?;
+
+                Ok(StmtIR::Assert(AssertIR {
+                    test: Self::convert_expr(test)?,
+                    msg,
+                    span: Self::convert_optional_span(&assert_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::RaiseStmt(raise_ir)) => {
+                let exc = raise_ir
+                    .exc
+                    .as_ref()
+                    .map(Self::convert_expr)
+                    .transpose()?;
+
+                let cause = raise_ir
+                    .cause
+                    .as_ref()
+                    .map(Self::convert_expr)
+                    .transpose()?;
+
+                Ok(StmtIR::Raise(RaiseIR {
+                    exc,
+                    cause,
+                    span: Self::convert_optional_span(&raise_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::GlobalStmt(global_ir)) => {
+                Ok(StmtIR::Global(GlobalIR {
+                    names: global_ir.names.clone(),
+                    span: Self::convert_optional_span(&global_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::NonlocalStmt(nonlocal_ir)) => {
+                Ok(StmtIR::Nonlocal(NonlocalIR {
+                    names: nonlocal_ir.names.clone(),
+                    span: Self::convert_optional_span(&nonlocal_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::PassStmt(pass_ir)) => {
+                Ok(StmtIR::Pass(PassIR {
+                    span: Self::convert_optional_span(&pass_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::BreakStmt(break_ir)) => {
+                Ok(StmtIR::Break(BreakIR {
+                    span: Self::convert_optional_span(&break_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::ContinueStmt(continue_ir)) => {
+                Ok(StmtIR::Continue(ContinueIR {
+                    span: Self::convert_optional_span(&continue_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::WithStmt(with_ir)) => {
+                let items = with_ir
+                    .items
+                    .iter()
+                    .map(Self::convert_with_item)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let body = with_ir
+                    .body
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(StmtIR::With(WithIR {
+                    items,
+                    body,
+                    type_comment: with_ir.type_comment.clone(),
+                    span: Self::convert_optional_span(&with_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::AsyncWith(async_with_ir)) => {
+                let items = async_with_ir
+                    .items
+                    .iter()
+                    .map(Self::convert_with_item)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let body = async_with_ir
+                    .body
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(StmtIR::AsyncWith(AsyncWithIR {
+                    items,
+                    body,
+                    type_comment: async_with_ir.type_comment.clone(),
+                    span: Self::convert_optional_span(&async_with_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::TryStmt(try_ir)) => {
+                let body = try_ir
+                    .body
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let handlers = try_ir
+                    .handlers
+                    .iter()
+                    .map(Self::convert_except_handler)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let orelse = try_ir
+                    .orelse
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let finalbody = try_ir
+                    .finalbody
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(StmtIR::Try(TryIR {
+                    body,
+                    handlers,
+                    orelse,
+                    finalbody,
+                    span: Self::convert_optional_span(&try_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::TryStarStmt(try_ir)) => {
+                let body = try_ir
+                    .body
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let handlers = try_ir
+                    .handlers
+                    .iter()
+                    .map(Self::convert_except_handler)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let orelse = try_ir
+                    .orelse
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let finalbody = try_ir
+                    .finalbody
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(StmtIR::TryStar(TryStarIR {
+                    body,
+                    handlers,
+                    orelse,
+                    finalbody,
+                    span: Self::convert_optional_span(&try_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::AsyncFor(async_for_ir)) => {
+                let target = async_for_ir
+                    .target
+                    .as_ref()
+                    .ok_or("async for has no target")?;
+
+                let iterable = async_for_ir
+                    .iter
+                    .as_ref()
+                    .ok_or("async for has no iterable")?;
+
+                let body = async_for_ir
+                    .body
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let orelse = async_for_ir
+                    .orelse
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(StmtIR::AsyncFor(AsyncForIR {
+                    target: Self::convert_expr(target)?,
+                    iter: Self::convert_expr(iterable)?,
+                    body,
+                    orelse,
+                    type_comment: async_for_ir.type_comment.clone(),
+                    span: Self::convert_optional_span(&async_for_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::TypeAlias(type_alias_ir)) => {
+                let name = type_alias_ir
+                    .name
+                    .as_ref()
+                    .ok_or("type alias has no name")?;
+
+                let value = type_alias_ir
+                    .value
+                    .as_ref()
+                    .ok_or("type alias has no value")?;
+
+                let type_params = type_alias_ir
+                    .type_params
+                    .iter()
+                    .map(Self::convert_param)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(StmtIR::TypeAlias(TypeAliasIR {
+                    name: Self::convert_expr(name)?,
+                    type_params,
+                    value: Self::convert_expr(value)?,
+                    span: Self::convert_optional_span(&type_alias_ir.span),
+                }))
+            }
+
+            Some(pb::stmt_ir::Kind::AsyncFunctionDef(function_ir)) => {
+                let args = function_ir
+                    .args
+                    .iter()
+                    .map(Self::convert_param)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let body = function_ir
+                    .body
+                    .iter()
+                    .map(Self::convert_stmt)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let decorators = function_ir
+                    .decorators
+                    .iter()
+                    .map(Self::convert_expr)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let returns = function_ir
+                    .returns
+                    .as_ref()
+                    .map(Self::convert_expr)
+                    .transpose()?;
+
+                let type_params = function_ir
+                    .type_params
+                    .iter()
+                    .map(Self::convert_param)
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(StmtIR::AsyncFunctionDef(AsyncFunctionDefIR {
+                    name: function_ir.name.clone(),
+                    args,
+                    body,
+                    decorators,
+                    returns,
+                    type_comment: function_ir.type_comment.clone(),
+                    scope_id: function_ir.scope_id,
+                    type_params,
+                    span: Self::convert_optional_span(&function_ir.span),
+                }))
+            }
+
             Some(pb::stmt_ir::Kind::Match(match_ir)) => {
                 let mut cases: Vec<MatchCaseIR> = Vec::new();
 
@@ -737,9 +1077,9 @@ impl PBDecoder {
                 Ok(StmtIR::Class(Self::convert_class(class_decl)?))
             }
 
-            None => {
-                return Err("expected statement, found None".into());
-            }
+            None => Err("statement has no kind".into()),
+
+            _ => Err("unsupported statement kind".into()),
         }
     }
 

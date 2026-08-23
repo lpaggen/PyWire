@@ -20,6 +20,8 @@ b = [x for x in range(10)]
 
 c = f"sin({x}) is {45.3223332:.3}"
 
+assert x == 5
+
 # from enum import Enum
 
 

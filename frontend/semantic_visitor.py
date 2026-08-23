@@ -1,16 +1,37 @@
 import ast
 
+from ir.assert_ir import AssertIR
+from ir.asyncfor_ir import AsyncForIR
+from ir.asyncfunctiondef_ir import AsyncFunctionDefIR
+from ir.asyncwith_ir import AsyncWithIR
+from ir.await_ir import AwaitIR
+from ir.break_ir import BreakIR
 from ir.bytes_ir import BytesIR
 from ir.complex_ir import ComplexIR
 from ir.comprehension_ir import CompIR, DictCompIR, GeneratorExprIR, ListCompIR, SetCompIR
+from ir.continue_ir import ContinueIR
+from ir.delete_ir import DeleteIR
 from ir.dict_ir import DictEntryIR, DictIR
+from ir.excepthandler_ir import ExceptHandlerIR
 from ir.expr_ir import ExprIR
 from ir.fstring_ir import Conversion, FormattedValueIR, JoinedStrIR
+from ir.global_ir import GlobalIR
+from ir.interpolation_ir import InterpolationIR
 from ir.lambda_ir import LambdaIR
+from ir.nonlocal_ir import NonlocalIR
+from ir.pass_ir import PassIR
+from ir.raise_ir import RaiseIR
 from ir.set_ir import SetIR
 from ir.starred_ir import StarredIR
 from ir.ternary_ir import IfExprIR
+from ir.try_ir import TryIR
+from ir.trystar_ir import TryStarIR
+from ir.typealias_ir import TypeAliasIR
 from ir.walrus_ir import NamedExprIR
+from ir.with_ir import WithIR
+from ir.withitem_ir import WithItemIR
+from ir.yield_ir import YieldIR
+from ir.yieldfrom_ir import YieldFromIR
 from .ir_builder import IRBuilder
 from ir.program_ir import ProgramIR
 from common.span import SourceSpan
@@ -73,6 +94,131 @@ class SemanticBuilder(ast.NodeVisitor):
 
     def visit_Module(self, node: ast.Module):
         self.builder.body = self.lower_statements(node.body)
+
+    def visit_Delete(self, node: ast.Delete):
+        return DeleteIR(
+            targets=[self.parse_expr(target) for target in node.targets],
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+
+    def visit_Assert(self, node: ast.Assert):
+        return AssertIR(
+            test=self.parse_expr(node.test),
+            msg=self.parse_expr(node.msg) if node.msg is not None else None,
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+
+    def visit_Raise(self, node: ast.Raise):
+        return RaiseIR(
+            exc=self.parse_expr(node.exc) if node.exc is not None else None,
+            cause=self.parse_expr(node.cause) if node.cause is not None else None,
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+
+    def visit_Global(self, node: ast.Global):
+        return GlobalIR(
+            names=node.names,
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+
+    def visit_Nonlocal(self, node: ast.Nonlocal):
+        return NonlocalIR(
+            names=node.names,
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+
+    def visit_Pass(self, node: ast.Pass):
+        return PassIR(
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+
+    def visit_Break(self, node: ast.Break):
+        return BreakIR(
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+
+    def visit_Continue(self, node: ast.Continue):
+        return ContinueIR(
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+
+    def lower_with_item(self, item: ast.withitem):
+        return WithItemIR(
+            context_expr=self.parse_expr(item.context_expr),
+            optional_vars=(
+                self.parse_expr(item.optional_vars)
+                if item.optional_vars is not None
+                else None
+            ),
+        )
+
+
+    def visit_With(self, node: ast.With):
+        return WithIR(
+            items=[self.lower_with_item(item) for item in node.items],
+            body=self.lower_statements(node.body),
+            type_comment=node.type_comment,
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+
+    def lower_except_handler(self, handler: ast.ExceptHandler):
+        return ExceptHandlerIR(
+            type=(
+                self.parse_expr(handler.type)
+                if handler.type is not None
+                else None
+            ),
+            name=handler.name,
+            body=self.lower_statements(handler.body),
+            span=SourceSpan.span(handler, self.file_path),
+        )
+
+
+    def visit_Try(self, node: ast.Try):
+        return TryIR(
+            body=self.lower_statements(node.body),
+            handlers=[
+                self.lower_except_handler(handler)
+                for handler in node.handlers
+            ],
+            orelse=self.lower_statements(node.orelse),
+            finalbody=self.lower_statements(node.finalbody),
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+
+    def visit_TryStar(self, node: ast.TryStar):
+        return TryStarIR(
+            body=self.lower_statements(node.body),
+            handlers=[
+                self.lower_except_handler(handler)
+                for handler in node.handlers
+            ],
+            orelse=self.lower_statements(node.orelse),
+            finalbody=self.lower_statements(node.finalbody),
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+
+    def visit_TypeAlias(self, node: ast.TypeAlias):
+        return TypeAliasIR(
+            name=self.parse_expr(node.name),
+            type_params=[
+                self.lower_type_param(param)
+                for param in node.type_params
+            ],
+            value=self.parse_expr(node.value),
+            span=SourceSpan.span(node, self.file_path),
+        )
 
     def lower_statements(self, statements):
         """Lower statements in source order and flatten multi-binding nodes."""
@@ -276,14 +422,72 @@ class SemanticBuilder(ast.NodeVisitor):
             span=SourceSpan.span(node, self.file_path),
         )
 
-    def visit_AsyncFor(self, node):
-        ...
+    def visit_AsyncFor(self, node: ast.AsyncFor):
+        parent_scope = self.current_scope()
+        loop_scope_id = self.builder.new_scope(
+            name="<for>", 
+            kind=ScopeKind.SCOPE_BLOCK, 
+            parent_id=parent_scope, 
+            span=SourceSpan.span(
+                node, self.file_path
+            )
+        )
 
-    def visit_AsyncFunctionDef(self, node):
-        ...
+        self.declare_assignment_target(node.target, SourceSpan.span(node.target, self.file_path))
+        target = self.parse_expr(node.target)
+        iter = self.parse_expr(node.iter)
 
-    def visit_AsyncWith(self, node):
-        ...
+        self.scope_stack.append(loop_scope_id)
+
+        body = self.lower_statements(node.body)
+        orelse = self.lower_statements(node.orelse)
+
+        self.scope_stack.pop()
+
+        return AsyncForIR(
+            target=target,
+            iter=iter,
+            body=body,
+            orelse=orelse,
+            type_comment=node.type_comment,
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
+        parent_scope = self.current_scope()
+
+        function_scope_id = self.builder.new_scope(
+            name=node.name,
+            kind=ScopeKind.SCOPE_FUNCTION,
+            parent_id=parent_scope,
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+        self.scope_stack.append(function_scope_id)
+
+        args = self.lower_params(node.args)
+        body = self.lower_statements(node.body)
+
+        self.scope_stack.pop()
+
+        return AsyncFunctionDefIR(
+            name=node.name,
+            args=args,
+            body=body,
+            decorators=[self.parse_expr(d) for d in node.decorator_list],
+            returns=self.parse_expr(node.returns) if node.returns is not None else None,
+            type_comment=node.type_comment,
+            scope_id=function_scope_id,
+            span=SourceSpan.span(node, self.file_path),
+        )
+
+    def visit_AsyncWith(self, node: ast.AsyncWith):
+        return AsyncWithIR(
+            items=[self.lower_with_item(item) for item in node.items],
+            body=self.lower_statements(node.body),
+            type_comment=node.type_comment,
+            span=SourceSpan.span(node, self.file_path)
+        )
 
     def visit_For(self, node: ast.For):
         parent_scope = self.current_scope()

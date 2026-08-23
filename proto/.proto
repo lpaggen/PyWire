@@ -117,7 +117,131 @@ message StmtIR {
     FunctionIR function = 9;
     ClassIR class_decl = 10;
     MatchIR match = 11;
+    AssertIR assert_stmt = 12;
+    DeleteIR delete_stmt = 13;
+    RaiseIR raise_stmt = 14;
+    GlobalIR global_stmt = 15;
+    NonlocalIR nonlocal_stmt = 16;
+    PassIR pass_stmt = 17;
+    BreakIR break_stmt = 18;
+    ContinueIR continue_stmt = 19;
+    WithIR with_stmt = 20;
+    TryIR try_stmt = 21;
+    TryStarIR try_star_stmt = 22;
+    TypeAliasIR type_alias = 23;
+    AsyncForIR async_for = 24;
+    AsyncFunctionDefIR async_function_def = 25;
+    AsyncWithIR async_with = 26;
   }
+}
+
+message AsyncForIR {
+  ExprIR target = 1;
+  ExprIR iter = 2;
+  repeated StmtIR body = 3;
+  repeated StmtIR orelse = 4;
+  optional string type_comment = 5;
+  optional SourceSpan span = 6;
+}
+
+message AsyncWithIR {
+  repeated WithItemIR items = 1;
+  repeated StmtIR body = 2;
+  optional string type_comment = 3;
+  optional SourceSpan span = 4;
+}
+
+message AsyncFunctionDefIR {
+  string name = 1;
+  repeated ParamIR args = 2;
+  repeated StmtIR body = 3;
+  repeated ExprIR decorators = 4;
+  optional ExprIR returns = 5;
+  optional string type_comment = 6;
+  uint64 scope_id = 7;
+  optional SourceSpan span = 8;
+  repeated ParamIR type_params = 9;
+}
+
+message DeleteIR {
+  repeated ExprIR targets = 1;
+  optional SourceSpan span = 2;
+}
+
+message AssertIR {
+  ExprIR test = 1;
+  optional ExprIR msg = 2;
+  optional SourceSpan span = 3;
+}
+
+message RaiseIR {
+  optional ExprIR exc = 1;
+  optional ExprIR cause = 2;
+  optional SourceSpan span = 3;
+}
+
+message GlobalIR {
+  repeated string names = 1;
+  optional SourceSpan span = 2;
+}
+
+message NonlocalIR {
+  repeated string names = 1;
+  optional SourceSpan span = 2;
+}
+
+message PassIR {
+  optional SourceSpan span = 1;
+}
+
+message BreakIR {
+  optional SourceSpan span = 1;
+}
+
+message ContinueIR {
+  optional SourceSpan span = 1;
+}
+
+message WithItemIR {
+  ExprIR context_expr = 1;
+  optional ExprIR optional_vars = 2;
+}
+
+message WithIR {
+  repeated WithItemIR items = 1;
+  repeated StmtIR body = 2;
+  optional string type_comment = 3;
+  optional SourceSpan span = 4;
+}
+
+message ExceptHandlerIR {
+  optional ExprIR type = 1;
+  optional string name = 2;
+  repeated StmtIR body = 3;
+  optional SourceSpan span = 4;
+}
+
+message TryIR {
+  repeated StmtIR body = 1;
+  repeated ExceptHandlerIR handlers = 2;
+  repeated StmtIR orelse = 3;
+  repeated StmtIR finalbody = 4;
+  optional SourceSpan span = 5;
+}
+
+message TryStarIR {
+  repeated StmtIR body = 1;
+  repeated ExceptHandlerIR handlers = 2;
+  repeated StmtIR orelse = 3;
+  repeated StmtIR finalbody = 4;
+  optional SourceSpan span = 5;
+}
+
+message TypeAliasIR {
+  ExprIR name = 1;
+  repeated ParamIR type_params = 2;
+  ExprIR value = 3;
+  optional SourceSpan span = 4;
 }
 
 message BindingIR {
