@@ -1,11 +1,11 @@
 from common.span import SourceSpan
 from generated import _pb2
 from .stmt_ir import StmtIR, stmt_to_proto
-from .expr_ir import ExprIR
+from ..expr.expr_ir import ExprIR
 from .decl_ir import DeclIR
 
 
-class ClassIR(DeclIR):
+class ClassDefIR(DeclIR):
     def __init__(
         self,
         id: int,

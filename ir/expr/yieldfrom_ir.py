@@ -2,18 +2,18 @@ from dataclasses import dataclass
 
 from common.span import SourceSpan
 from generated import _pb2
-from ir.expr_ir import ExprIR
+from ir.expr.expr_ir import ExprIR
 
 
 @dataclass
-class TemplateStrIR(ExprIR):
+class YieldFromIR(ExprIR):
     value: ExprIR
     span: SourceSpan | None
 
     def to_proto(self):
         return _pb2.ExprIR(
-            template_str=_pb2.TemplateStrIR(
-                values=[value.to_proto() for value in self.values],
+            yield_from=_pb2.YieldFromIR(
+                value=self.value.to_proto(),
                 span=self.span.to_proto(),
             )
         )

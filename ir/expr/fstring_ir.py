@@ -1,12 +1,10 @@
 from enum import IntEnum
 from common.span import SourceSpan
 from generated import _pb2
-from ir.constant_ir import ConstantIR
-from ir.expr_ir import ExprIR
+from ir.expr.expr_ir import ExprIR
 from dataclasses import dataclass
 
 
-# TODO double check if we need this inside .proto
 class Conversion(IntEnum):
     NONE = -1
     STR = ord("s")  # 115
@@ -45,6 +43,44 @@ class JoinedStrIR(ExprIR):
         return _pb2.ExprIR(
             joined_str=_pb2.JoinedStrIR(
                 values=[value.to_proto() for value in self.values],
+                span=self.span.to_proto(),
+            )
+        )
+
+
+@dataclass
+class TemplateStrIR(ExprIR):
+    value: ExprIR
+    span: SourceSpan | None
+
+    def to_proto(self):
+        return _pb2.ExprIR(
+            template_str=_pb2.TemplateStrIR(
+                values=[value.to_proto() for value in self.values],
+                span=self.span.to_proto(),
+            )
+        )
+
+
+@dataclass
+class InterpolationIR(ExprIR):
+    value: ExprIR
+    source: str
+    conversion: Conversion
+    format_spec: ExprIR | None
+    span: SourceSpan | None
+
+    def to_proto(self):
+        return _pb2.ExprIR(
+            interpolation=_pb2.InterpolationIR(
+                value=self.value.to_proto(),
+                source=self.source,
+                conversion=int(self.conversion),
+                format_spec=(
+                    self.format_spec.to_proto()
+                    if self.format_spec is not None
+                    else None
+                ),
                 span=self.span.to_proto(),
             )
         )

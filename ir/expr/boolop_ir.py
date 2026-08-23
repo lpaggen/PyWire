@@ -1,11 +1,11 @@
-from .ir_node import IRNode
+from ir.expr.constant_ir import BooleanIR
+from ir.expr.expr_ir import ExprIR
 from common.span import SourceSpan
 from common.operators import Operator
-from .bool_ir import BooleanIR
 from generated import _pb2
 
 
-class BoolOpIR(IRNode):
+class BoolOpIR(ExprIR):
     def __init__(
         self, left: BooleanIR, right: BooleanIR, op: Operator, span: SourceSpan = None
     ):

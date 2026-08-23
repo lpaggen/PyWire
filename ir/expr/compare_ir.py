@@ -1,4 +1,4 @@
-from .stmt_ir import StmtIR
+from ..stmt.stmt_ir import StmtIR
 from common.span import SourceSpan
 from .expr_ir import ExprIR
 from common.operators import Operator

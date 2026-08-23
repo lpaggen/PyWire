@@ -1,6 +1,6 @@
 from typing import List
 from common.span import SourceSpan
-from ir.expr_ir import ExprIR
+from ir.expr.expr_ir import ExprIR
 from generated import _pb2
 from ir.ir_node import IRNode
 
