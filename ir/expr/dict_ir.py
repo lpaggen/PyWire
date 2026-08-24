@@ -1,17 +1,13 @@
 from common.span import SourceSpan
 from ir.expr_ir import ExprIR
 from generated import _pb2
+from dataclasses import dataclass
 
+@dataclass
 class DictIR(ExprIR):
-    def __init__(
-        self,
-        keys: list[ExprIR | None],
-        values: list[ExprIR],
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.keys = keys
-        self.values = values
+    keys: list[ExprIR | None]
+    values: list[ExprIR]
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.DictIR(

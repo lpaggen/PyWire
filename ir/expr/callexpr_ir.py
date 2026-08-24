@@ -1,14 +1,14 @@
 from .expr_ir import ExprIR
 from common.span import SourceSpan
 from generated import _pb2
+from dataclasses import dataclass
 
 
+@dataclass
 class KeywordArgIR(ExprIR):
-    def __init__(self, arg: str | None, value: ExprIR, span: SourceSpan = None):
-        super().__init__(span=span, value=value)  # TODO check if value should be IdentifierIR or not
-        self.arg = arg
-        self.value = value
-        self.span = span
+    arg: str | None
+    value: ExprIR
+    span: SourceSpan | None = None
 
     def to_proto(self):
         proto = _pb2.KeywordArgIR()
@@ -20,15 +20,12 @@ class KeywordArgIR(ExprIR):
         return proto
 
 
+@dataclass
 class CallExprIR(ExprIR):
-    def __init__(
-        self, func, args: list[ExprIR], keywords: list[KeywordArgIR], span=None
-    ):
-        super().__init__(span=span, value=func)
-        self.span = span
-        self.func = func
-        self.args = args
-        self.keywords = keywords
+    func: ExprIR
+    args: list[ExprIR]
+    keywords: list[KeywordArgIR]
+    span: SourceSpan | None = None
 
     def to_proto(self):
         return _pb2.ExprIR(

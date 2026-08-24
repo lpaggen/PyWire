@@ -1,14 +1,14 @@
 from .expr_ir import ExprIR
 from common.span import SourceSpan
 from generated import _pb2
+from dataclasses import dataclass
 
 
+@dataclass
 class AttributeExprIR(ExprIR):
-    def __init__(self, value: ExprIR, attr: str, span: SourceSpan):
-        super().__init__(span=span, value=value)
-        self.value = value
-        self.attr = attr
-        self.span = span
+    value: ExprIR
+    attr: str
+    span: SourceSpan
 
     def to_proto(self):
         attr_proto = _pb2.AttributeExprIR(

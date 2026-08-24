@@ -26,10 +26,10 @@ class AnnotationHeadIR(IRNode):
         return proto
 
 
+@dataclass
 class AnnotationIR(IRNode):
-    def __init__(self, head: AnnotationHeadIR, args: List[ExprIR]):
-        self.head = head
-        self.args = args
+    head: AnnotationHeadIR
+    args: List[ExprIR]
 
     def to_proto(self):
         proto = _pb2.AnnotationIR()

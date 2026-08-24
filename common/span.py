@@ -1,21 +1,15 @@
 import ast
+from dataclasses import dataclass
 from generated import _pb2
 
 
+@dataclass
 class SourceSpan:
-    def __init__(
-        self,
-        file: str,
-        lineno: int,
-        col_offset: int,
-        end_lineno: int | None,
-        end_col_offset: int | None,
-    ):
-        self.file = file
-        self.lineno = lineno
-        self.col_offset = col_offset
-        self.end_lineno = end_lineno
-        self.end_col_offset = end_col_offset
+    file: str
+    lineno: int
+    col_offset: int
+    end_lineno: int | None
+    end_col_offset: int | None
 
     @staticmethod
     def span(node: ast.AST, file_path: str) -> "SourceSpan":

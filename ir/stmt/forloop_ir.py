@@ -3,28 +3,18 @@ from .ir_node import IRNode
 from .stmt_ir import StmtIR, stmt_to_proto
 from typing import List
 from generated import _pb2
+from dataclasses import dataclass
 
 
+@dataclass
 class ForLoopIR(StmtIR):
-    def __init__(
-        self,
-        target: IRNode,
-        iter: int,
-        scope_id: int,
-        body_scope_id: int,
-        body: List[IRNode],
-        orelse: List[IRNode],
-        span: SourceSpan = None,
-    ):
-        super().__init__(span)
-        self.target = target
-        self.iter = iter
-        self.scope_id = scope_id
-        self.body_scope_id = body_scope_id
-        self.body = body
-        self.orelse = orelse
-        self.span = span
-
+    target: IRNode
+    iter: IRNode
+    scope_id: int
+    body_scope_id: int
+    body: List[IRNode]
+    orelse: List[IRNode]
+    span: SourceSpan | None = None
     def to_proto(self):
         proto = _pb2.ForLoopIR(
             scope_id=self.scope_id,

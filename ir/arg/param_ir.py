@@ -1,4 +1,5 @@
 from enum import Enum
+from dataclasses import dataclass
 
 from common.span import SourceSpan
 from generated import _pb2
@@ -14,22 +15,14 @@ class ArgKind(Enum):
     VAR_KEYWORD = 5
 
 
+@dataclass
 class ArgIR(IRNode):
-    def __init__(
-        self,
-        symbol_id: int,
-        arg: str,
-        kind: ArgKind,
-        annotation: AnnotationIR,
-        default,
-        span: SourceSpan,
-    ):
-        self.symbol_id = symbol_id
-        self.arg = arg
-        self.kind = kind
-        self.annotation = annotation
-        self.default = default
-        self.span = span
+    symbol_id: int
+    arg: str
+    kind: ArgKind
+    annotation: AnnotationIR | None
+    default: object | None
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.ArgIR(

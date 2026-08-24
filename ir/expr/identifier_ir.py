@@ -1,14 +1,14 @@
 from common.span import SourceSpan
 from generated import _pb2
 from .expr_ir import ExprIR
+from dataclasses import dataclass
 
 
+@dataclass(repr=False)
 class IdentifierIR(ExprIR):
-    def __init__(self, id: str, use_scope_id: int, span: SourceSpan):
-        super().__init__(value=id, span=span)
-        self.id = id
-        self.use_scope_id = use_scope_id
-        self.span = span
+    id: str
+    use_scope_id: int
+    span: SourceSpan
 
     def __repr__(self):
         return self.id

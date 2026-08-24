@@ -1,16 +1,16 @@
 from common.span import SourceSpan
 from .ir_node import IRNode
 from generated import _pb2
+from dataclasses import dataclass
 
 
+@dataclass
 class SymbolIR(IRNode):
-    def __init__(self, id: int, name: str, kind: str, scope_id: int, span: SourceSpan):
-        self.id = id
-        self.name = name
-        self.kind = kind
-        self.scope_id = scope_id
-        self.span = span
-
+    id: int
+    name: str
+    kind: object
+    scope_id: int
+    span: SourceSpan | None
     def to_proto(self):
         proto = _pb2.SymbolIR(
             id=self.id,

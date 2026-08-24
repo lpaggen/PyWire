@@ -3,21 +3,15 @@ from common.span import SourceSpan
 from .expr_ir import ExprIR
 from common.operators import Operator
 from generated import _pb2
+from dataclasses import dataclass
 
 
+@dataclass
 class CompareIR(ExprIR):
-    def __init__(
-        self,
-        left: ExprIR,
-        ops: list[Operator],
-        comparators: list[ExprIR],
-        span: SourceSpan,
-    ):
-        super().__init__(span=span, value=None)
-        self.left = left
-        self.ops = ops
-        self.comparators = comparators
-        self.span = span
+    left: ExprIR
+    ops: list[Operator]
+    comparators: list[ExprIR]
+    span: SourceSpan
 
     def to_proto(self):
         compare = _pb2.CompareIR()

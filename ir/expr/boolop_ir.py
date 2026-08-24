@@ -3,17 +3,14 @@ from ir.expr.expr_ir import ExprIR
 from common.span import SourceSpan
 from common.operators import Operator
 from generated import _pb2
+from dataclasses import dataclass
 
 
+@dataclass
 class BoolOpIR(ExprIR):
-    def __init__(
-        self, left: BooleanIR, right: BooleanIR, op: Operator, span: SourceSpan = None
-    ):
-        super().__init__(span=span)
-        self.span = span
-        self.left = left
-        self.right = right
-        self.op = op
+    values: list[ExprIR]
+    op: Operator
+    span: SourceSpan | None = None
 
     def to_proto(self):
         proto = _pb2.BoolOpIR(

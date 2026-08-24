@@ -2,6 +2,7 @@ from common.span import SourceSpan
 from .expr_ir import ExprIR
 from .ir_node import IRNode
 from generated import _pb2
+from dataclasses import dataclass
 
 
 class PatternIR(IRNode):
@@ -12,14 +13,10 @@ class PatternIR(IRNode):
         self.span = span
 
 
+@dataclass
 class ValuePatternIR(PatternIR):
-    def __init__(
-        self,
-        value: ExprIR,
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.value = value
+    value: ExprIR
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.ValuePatternIR()
@@ -34,14 +31,10 @@ class ValuePatternIR(PatternIR):
         return pattern
 
 
+@dataclass
 class SingletonPatternIR(PatternIR):
-    def __init__(
-        self,
-        value: None | bool,
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.value = value
+    value: None | bool
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.SingletonPatternIR()
@@ -61,14 +54,10 @@ class SingletonPatternIR(PatternIR):
         return pattern
 
 
+@dataclass
 class SequencePatternIR(PatternIR):
-    def __init__(
-        self,
-        patterns: list[PatternIR],
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.patterns = patterns
+    patterns: list[PatternIR]
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.SequencePatternIR()
@@ -86,18 +75,12 @@ class SequencePatternIR(PatternIR):
         return pattern
 
 
+@dataclass
 class MappingPatternIR(PatternIR):
-    def __init__(
-        self,
-        keys: list[ExprIR],
-        patterns: list[PatternIR],
-        rest: str | None,
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.keys = keys
-        self.patterns = patterns
-        self.rest = rest
+    keys: list[ExprIR]
+    patterns: list[PatternIR]
+    rest: str | None
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.MappingPatternIR()
@@ -123,20 +106,13 @@ class MappingPatternIR(PatternIR):
         return pattern
 
 
+@dataclass
 class ClassPatternIR(PatternIR):
-    def __init__(
-        self,
-        cls: ExprIR,
-        patterns: list[PatternIR],
-        kwd_attrs: list[str],
-        kwd_patterns: list[PatternIR],
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.cls = cls
-        self.patterns = patterns
-        self.kwd_attrs = kwd_attrs
-        self.kwd_patterns = kwd_patterns
+    cls: ExprIR
+    patterns: list[PatternIR]
+    kwd_attrs: list[str]
+    kwd_patterns: list[PatternIR]
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.ClassPatternIR()
@@ -163,14 +139,10 @@ class ClassPatternIR(PatternIR):
         return pattern
 
 
+@dataclass
 class StarPatternIR(PatternIR):
-    def __init__(
-        self,
-        name: str | None,
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.name = name
+    name: str | None
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.StarPatternIR()
@@ -186,14 +158,10 @@ class StarPatternIR(PatternIR):
         return pattern
 
 
+@dataclass
 class CapturePatternIR(PatternIR):
-    def __init__(
-        self,
-        name: str,
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.name = name
+    name: str
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.CapturePatternIR()
@@ -208,12 +176,9 @@ class CapturePatternIR(PatternIR):
         return pattern
 
 
+@dataclass
 class WildcardPatternIR(PatternIR):
-    def __init__(
-        self,
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.WildcardPatternIR()
@@ -226,16 +191,11 @@ class WildcardPatternIR(PatternIR):
         return pattern
 
 
+@dataclass
 class AsPatternIR(PatternIR):
-    def __init__(
-        self,
-        pattern: PatternIR,
-        name: str,
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.pattern = pattern
-        self.name = name
+    pattern: PatternIR
+    name: str
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.AsPatternIR()
@@ -251,14 +211,10 @@ class AsPatternIR(PatternIR):
         return pattern
 
 
+@dataclass
 class OrPatternIR(PatternIR):
-    def __init__(
-        self,
-        patterns: list[PatternIR],
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.patterns = patterns
+    patterns: list[PatternIR]
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.OrPatternIR()

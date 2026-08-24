@@ -2,22 +2,16 @@ from common.span import SourceSpan
 from generated import _pb2
 from ir.expr.expr_ir import ExprIR
 from ir.ir_node import IRNode
+from dataclasses import dataclass
 
 
+@dataclass
 class CompIR(IRNode):
-    def __init__(
-        self,
-        target: ExprIR,
-        iter: ExprIR,
-        ifs: list[ExprIR],
-        is_async: bool,
-        span: SourceSpan
-    ):
-        self.span = span
-        self.target = target
-        self.iter = iter
-        self.ifs = ifs
-        self.is_async = is_async
+    target: ExprIR
+    iter: ExprIR
+    ifs: list[ExprIR]
+    is_async: bool
+    span: SourceSpan
 
     def to_proto(self):
         return _pb2.CompIR(
@@ -29,16 +23,11 @@ class CompIR(IRNode):
         )
 
 
+@dataclass
 class ListCompIR(ExprIR):
-    def __init__(
-        self,
-        elt: ExprIR,
-        generators: list[CompIR],
-        span: SourceSpan
-    ):
-        super().__init__(span=span, value=None)
-        self.elt = elt
-        self.generators = generators
+    elt: ExprIR
+    generators: list[CompIR]
+    span: SourceSpan
 
     def to_proto(self):
         return _pb2.ExprIR(
@@ -49,16 +38,11 @@ class ListCompIR(ExprIR):
             )
         )
 
+@dataclass
 class SetCompIR(ExprIR):
-    def __init__(
-        self,
-        elt: ExprIR,
-        generators: list[CompIR],
-        span: SourceSpan,
-    ):
-        super().__init__(span=span, value=None)
-        self.elt = elt
-        self.generators = generators
+    elt: ExprIR
+    generators: list[CompIR]
+    span: SourceSpan
 
     def to_proto(self):
         return _pb2.ExprIR(
@@ -69,18 +53,12 @@ class SetCompIR(ExprIR):
             )
         )
 
+@dataclass
 class DictCompIR(ExprIR):
-    def __init__(
-        self,
-        key: ExprIR,
-        value: ExprIR,
-        generators: list[CompIR],
-        span: SourceSpan,
-    ):
-        super().__init__(span=span, value=None)
-        self.key = key
-        self.value = value
-        self.generators = generators
+    key: ExprIR
+    value: ExprIR
+    generators: list[CompIR]
+    span: SourceSpan
 
     def to_proto(self):
         return _pb2.ExprIR(
@@ -92,16 +70,11 @@ class DictCompIR(ExprIR):
             )
         )
 
+@dataclass
 class GeneratorExprIR(ExprIR):
-    def __init__(
-        self,
-        elt: ExprIR,
-        generators: list[CompIR],
-        span: SourceSpan,
-    ):
-        super().__init__(span=span, value=None)
-        self.elt = elt
-        self.generators = generators
+    elt: ExprIR
+    generators: list[CompIR]
+    span: SourceSpan
 
     def to_proto(self):
         return _pb2.ExprIR(

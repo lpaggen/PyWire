@@ -1,16 +1,13 @@
 from common.span import SourceSpan
 from .expr_ir import ExprIR
 from generated import _pb2
+from dataclasses import dataclass
 
 
+@dataclass
 class ListIR(ExprIR):
-    def __init__(self, elts: list[ExprIR], span: SourceSpan = None):
-        super().__init__(span=span, value=None)
-        self.span = span
-        self.elts = elts
-
-    def __repr__(self):
-        return "ListIR<" + str(self.elts) + ">"
+    elts: list[ExprIR]
+    span: SourceSpan | None = None
 
     def to_proto(self):
         proto = _pb2.ListIR()

@@ -2,17 +2,15 @@ from common.span import SourceSpan
 from common.operators import Operator
 from generated import _pb2
 from .expr_ir import ExprIR
+from dataclasses import dataclass
 
 
+@dataclass
 class BinOpIR(ExprIR):
-    def __init__(
-        self, left: ExprIR, right: ExprIR, op: Operator, span: SourceSpan = None
-    ):
-        super().__init__(span=span, value=None)
-        self.op = op
-        self.left = left
-        self.right = right
-        self.span = span
+    left: ExprIR
+    right: ExprIR
+    op: Operator
+    span: SourceSpan | None = None
 
     def to_proto(self):
         proto = _pb2.BinOpIR(

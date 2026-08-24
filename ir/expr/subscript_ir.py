@@ -1,14 +1,14 @@
 from .expr_ir import ExprIR
 from common.span import SourceSpan
 from generated import _pb2
+from dataclasses import dataclass
 
 
+@dataclass
 class SubscriptIR(ExprIR):
-    def __init__(self, value: ExprIR, slice: ExprIR, span: SourceSpan):
-        super().__init__(span=span, value=None)
-        self.value = value
-        self.slice = slice
-        self.span = span
+    value: ExprIR
+    slice: ExprIR
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.SubscriptIR()

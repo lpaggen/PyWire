@@ -7,24 +7,14 @@ from ir.ir_node import IRNode
 from ir.stmt.stmt_ir import StmtIR, stmt_to_proto
 
 
+@dataclass
 class WhileLoopIR(StmtIR):
-    def __init__(
-        self,
-        test: ExprIR,
-        scope_id: int,
-        body_scope_id: int,
-        body: list[StmtIR],
-        orelse: list[StmtIR],
-        span: SourceSpan,
-    ):
-        super().__init__(span)
-        self.test = test
-        self.scope_id = scope_id
-        self.body_scope_id = body_scope_id
-        self.body = body
-        self.orelse = orelse
-        self.span = span
-
+    test: ExprIR
+    scope_id: int
+    body_scope_id: int
+    body: list[StmtIR]
+    orelse: list[StmtIR]
+    span: SourceSpan
     def to_proto(self):
         proto = _pb2.WhileLoopIR(
             scope_id=self.scope_id,
@@ -65,26 +55,15 @@ class AsyncForIR(StmtIR):
         )
 
 
+@dataclass
 class ForLoopIR(StmtIR):
-    def __init__(
-        self,
-        target: IRNode,
-        iter: int,
-        scope_id: int,
-        body_scope_id: int,
-        body: list[IRNode],
-        orelse: list[IRNode],
-        span: SourceSpan = None,
-    ):
-        super().__init__(span)
-        self.target = target
-        self.iter = iter
-        self.scope_id = scope_id
-        self.body_scope_id = body_scope_id
-        self.body = body
-        self.orelse = orelse
-        self.span = span
-
+    target: IRNode
+    iter: IRNode
+    scope_id: int
+    body_scope_id: int
+    body: list[IRNode]
+    orelse: list[IRNode]
+    span: SourceSpan | None = None
     def to_proto(self):
         proto = _pb2.ForLoopIR(
             scope_id=self.scope_id,

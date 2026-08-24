@@ -585,7 +585,7 @@ enum ArgKind {
 }
 
 message NamedExprIR {
-  string target = 1;
+  ExprIR target = 1;
   ExprIR value = 2;
   optional SourceSpan span = 3;
 }

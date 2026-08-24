@@ -3,14 +3,14 @@ from common.span import SourceSpan
 from .expr_ir import ExprIR
 from common.operators import Operator
 from generated import _pb2
+from dataclasses import dataclass
 
 
+@dataclass
 class UnaryOpIR(ExprIR):
-    def __init__(self, op: Operator, operand: ExprIR, span: SourceSpan):
-        super().__init__(span=span, value=operand)
-        self.span = span
-        self.operand = operand
-        self.op = op
+    op: Operator
+    operand: ExprIR
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.UnaryOpIR(

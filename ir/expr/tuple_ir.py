@@ -2,16 +2,13 @@ from common.span import SourceSpan
 from .ir_node import IRNode
 from .expr_ir import ExprIR
 from generated import _pb2
+from dataclasses import dataclass
 
 
+@dataclass
 class TupleIR(ExprIR):
-    def __init__(self, elts: tuple[ExprIR], span: SourceSpan = None):
-        super().__init__(span=span, value=None)
-        self.span = span
-        self.elts = elts
-
-    def __repr__(self):
-        return "TupleIR<" + str(self.elts) + ">"
+    elts: tuple[ExprIR]
+    span: SourceSpan | None = None
 
     def to_proto(self):
         tuple_proto = _pb2.TupleIR()

@@ -1,20 +1,15 @@
 from common.span import SourceSpan
 from generated import _pb2
 from ir.expr_ir import ExprIR
+from dataclasses import dataclass
 
 
+@dataclass
 class IfExprIR(ExprIR):
-    def __init__(
-        self,
-        test: ExprIR,
-        body: ExprIR,
-        orelse: ExprIR,
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.test = test
-        self.body = body
-        self.orelse = orelse
+    test: ExprIR
+    body: ExprIR
+    orelse: ExprIR
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.IfExprIR()
