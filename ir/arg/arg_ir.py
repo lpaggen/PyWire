@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from common.span import SourceSpan
 from generated import _pb2
-from ir.annotation_ir import AnnotationIR
+from ir.annotation.annotation_ir import AnnotationIR
 from ir.ir_node import IRNode
 
 

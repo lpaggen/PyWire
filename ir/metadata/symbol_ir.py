@@ -1,25 +1,23 @@
 from common.span import SourceSpan
-from .ir_node import IRNode
+from ir.ir_node import IRNode
 from generated import _pb2
 from dataclasses import dataclass
 
 
 @dataclass
-class ScopeIR(IRNode):
+class SymbolIR(IRNode):
     id: int
     name: str
     kind: object
-    parent_id: int | None
+    scope_id: int
     span: SourceSpan | None
     def to_proto(self):
-        proto = _pb2.ScopeIR(
+        proto = _pb2.SymbolIR(
             id=self.id,
             name=self.name,
             kind=self.kind.value if hasattr(self.kind, "value") else self.kind,
+            scope_id=self.scope_id,
         )
-
-        if self.parent_id is not None:
-            proto.parent_id = self.parent_id
 
         if self.span is not None:
             proto.span.CopyFrom(self.span.to_proto())

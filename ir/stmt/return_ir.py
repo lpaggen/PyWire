@@ -1,7 +1,7 @@
 from common.span import SourceSpan
 from generated import _pb2
 from ir.expr.expr_ir import ExprIR
-from ir.stmt_ir import StmtIR
+from ir.stmt.stmt_ir import StmtIR
 from dataclasses import dataclass
 
 

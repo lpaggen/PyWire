@@ -1,6 +1,6 @@
 from .stmt_ir import StmtIR, stmt_to_proto
 from common.span import SourceSpan
-from .expr_ir import ExprIR
+from ir.expr.expr_ir import ExprIR
 from typing import List
 from generated import _pb2
 from dataclasses import dataclass

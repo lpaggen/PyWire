@@ -1,5 +1,5 @@
 from common.span import SourceSpan
-from .ir_node import IRNode
+from ir.ir_node import IRNode
 from .stmt_ir import StmtIR, stmt_to_proto
 from typing import List
 from generated import _pb2
@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class ForLoopIR(StmtIR):
+class ForIR(StmtIR):
     target: IRNode
     iter: IRNode
     scope_id: int

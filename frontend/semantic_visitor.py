@@ -1,71 +1,64 @@
 import ast
 
 from common.typeparam_ir import ParamSpecIR, TypeVarIR, TypeVarTupleIR
-from ir.assert_ir import AssertIR
-from ir.asyncfor_ir import AsyncForIR
-from ir.asyncfunctiondef_ir import AsyncFunctionDefIR
-from ir.asyncwith_ir import AsyncWithIR
-from ir.await_ir import AwaitIR
-from ir.break_ir import BreakIR
-from ir.bytes_ir import BytesIR
-from ir.complex_ir import ComplexIR
-from ir.comprehension_ir import CompIR, DictCompIR, GeneratorExprIR, ListCompIR, SetCompIR
-from ir.continue_ir import ContinueIR
-from ir.delete_ir import DeleteIR
-from ir.dict_ir import DictIR
-from ir.excepthandler_ir import ExceptHandlerIR
-from ir.expr_ir import ExprIR
-from ir.fstring_ir import Conversion, FormattedValueIR, JoinedStrIR
-from ir.global_ir import GlobalIR
-from ir.interpolation_ir import InterpolationIR
-from ir.lambda_ir import LambdaIR
-from ir.nonlocal_ir import NonlocalIR
-from ir.pass_ir import PassIR
-from ir.raise_ir import RaiseIR
-from ir.set_ir import SetIR
-from ir.starred_ir import StarredIR
-from ir.ternary_ir import IfExprIR
-from ir.try_ir import TryIR
-from ir.trystar_ir import TryStarIR
-from ir.typealias_ir import TypeAliasIR
-from ir.walrus_ir import NamedExprIR
-from ir.with_ir import WithIR
-from ir.withitem_ir import WithItemIR
-from ir.yield_ir import YieldIR
-from ir.yieldfrom_ir import YieldFromIR
+from ir.expr.attribute_ir import AttributeIR
+from ir.expr.await_ir import AwaitIR
+from ir.expr.binop_ir import BinOpIR
+from ir.expr.boolop_ir import BoolOpIR
+from ir.expr.call_ir import CallIR, KeywordIR
+from ir.expr.compare_ir import CompareIR
+from ir.expr.comprehension_ir import CompIR, DictCompIR, GeneratorExpIR, ListCompIR, SetCompIR
+from ir.expr.constant_ir import BooleanIR, BytesIR, ComplexIR, EllipsisIR, FloatIR, IntegerIR, NoneIR, StringIR
+from ir.expr.conversion_ir import Conversion
+from ir.expr.dict_ir import DictIR
+from ir.expr.expr_ir import ExprIR
+from ir.expr.formattedvalue_ir import FormattedValueIR
+from ir.expr.ifexp_ir import IfExpIR
+from ir.expr.interpolation_ir import InterpolationIR
+from ir.expr.joinedstr_ir import JoinedStrIR
+from ir.expr.lambda_ir import LambdaIR
+from ir.expr.list_ir import ListIR
+from ir.expr.name_ir import NameIR
+from ir.expr.namedexpr_ir import NamedExprIR
+from ir.expr.set_ir import SetIR
+from ir.expr.slice_ir import SliceIR
+from ir.expr.starred_ir import StarredIR
+from ir.expr.subscript_ir import SubscriptIR
+from ir.expr.tuple_ir import TupleIR
+from ir.expr.unaryop_ir import UnaryOpIR
+from ir.expr.yield_ir import YieldIR
+from ir.expr.yieldfrom_ir import YieldFromIR
+from ir.stmt.assert_ir import AssertIR
+from ir.stmt.asyncfunctiondef_ir import AsyncFunctionDefIR
+from ir.stmt.break_ir import BreakIR
+from ir.stmt.continue_ir import ContinueIR
+from ir.stmt.delete_ir import DeleteIR
+from ir.stmt.exprstmt_ir import ExprStmtIR
+from ir.stmt.for_ir import ForIR
+from ir.stmt.global_ir import GlobalIR
+from ir.stmt.if_ir import IfIR
+from ir.stmt.asyncfor_ir import AsyncForIR
+from ir.stmt.while_ir import WhileIR
+from ir.stmt.match_ir import MatchCaseIR, MatchIR
+from ir.stmt.nonlocal_ir import NonlocalIR
+from ir.stmt.pass_ir import PassIR
+from ir.stmt.raise_ir import RaiseIR
+from ir.stmt.try_ir import ExceptHandlerIR, TryIR
+from ir.stmt.trystar_ir import TryStarIR
+from ir.stmt.typealias_ir import TypeAliasIR
+from ir.stmt.asyncwith_ir import AsyncWithIR
+from ir.stmt.with_ir import WithIR, WithItemIR
 from .ir_builder import IRBuilder
 from ir.program_ir import ProgramIR
 from common.span import SourceSpan
-from ir.annotation_ir import AnnotationIR, AnnotationHeadIR
-from ir.arg.param_ir import ArgIR, ArgKind
+from ir.annotation.annotation_ir import AnnotationIR
+from ir.annotation.annotationhead_ir import AnnotationHeadIR
+from ir.arg.arg_ir import ArgIR, ArgKind
 from ir.stmt.return_ir import ReturnIR
-from ir.identifier_ir import IdentifierIR
-from ir.attributeexpr_ir import AttributeExprIR
 from common.operators import Operator
-from ir.augassign_ir import AugAssignIR
-from ir.forloop_ir import ForLoopIR
-from ir.subscript_ir import SubscriptIR
-from ir.tuple_ir import TupleIR
-from ir.none_ir import NoneIR
-from ir.slice_ir import SliceIR
-from ir.whileloop_ir import WhileLoopIR
-from ir.bool_ir import BooleanIR
-from ir.exprstmt_ir import ExprStmtIR
-from ir.boolop_ir import BoolOpIR
-from ir.if_ir import IfIR
-from ir.compare_ir import CompareIR
-from ir.unaryop_ir import UnaryOpIR
-from ir.callexpr_ir import CallExprIR, KeywordArgIR
-from ir.list_ir import ListIR
-from ir.integer_ir import IntegerIR
-from ir.float_ir import FloatIR
-from ir.string_ir import StringIR
-from ir.binop_ir import BinOpIR
-from ir.ellipsis_ir import EllipsisIR
+from ir.stmt.augassign_ir import AugAssignIR
 from common.kind import ScopeKind, SymbolKind, BindingKind, ImportKind
-from ir.pattern_ir import AsPatternIR, OrPatternIR, StarPatternIR, ClassPatternIR, ValuePatternIR, CapturePatternIR, MappingPatternIR, SequencePatternIR, WildcardPatternIR, SingletonPatternIR
-from ir.match_ir import MatchIR, MatchCaseIR
-from ir.pattern_ir import PatternIR
+from ir.pattern.pattern_ir import AsPatternIR, OrPatternIR, StarPatternIR, ClassPatternIR, ValuePatternIR, CapturePatternIR, MappingPatternIR, SequencePatternIR, WildcardPatternIR, SingletonPatternIR, PatternIR
 
 
 class SemanticBuilder(ast.NodeVisitor):
@@ -410,7 +403,7 @@ class SemanticBuilder(ast.NodeVisitor):
             body=body,
             bases=[self.parse_expr(base) for base in node.bases],
             keywords=[
-                KeywordArgIR(
+                KeywordIR(
                     arg=keyword.arg,
                     value=self.parse_expr(keyword.value),
                     span=SourceSpan.span(keyword, self.file_path),
@@ -455,7 +448,7 @@ class SemanticBuilder(ast.NodeVisitor):
 
         self.scope_stack.pop()
 
-        return WhileLoopIR(
+        return WhileIR(
             test=test_ir,
             scope_id=self.current_scope(),
             body_scope_id=loop_scope_id,
@@ -554,7 +547,7 @@ class SemanticBuilder(ast.NodeVisitor):
 
         self.scope_stack.pop()
 
-        return ForLoopIR(
+        return ForIR(
             target=target_ir,
             iter=iter_ir,
             scope_id=self.current_scope(),
@@ -1055,7 +1048,7 @@ class SemanticBuilder(ast.NodeVisitor):
             raise NotImplementedError(f"Unsupported constant: {node.value!r}")
 
         if isinstance(node, ast.IfExp):
-            return IfExprIR(
+            return IfExpIR(
                 test=self.parse_expr(node.test),
                 body=self.parse_expr(node.body),
                 orelse=self.parse_expr(node.orelse),
@@ -1130,7 +1123,7 @@ class SemanticBuilder(ast.NodeVisitor):
             )
 
         if isinstance(node, ast.Name):
-            return IdentifierIR(
+            return NameIR(
                 id=node.id,
                 use_scope_id=self.current_scope(),
                 span=SourceSpan.span(node, self.file_path),
@@ -1153,25 +1146,25 @@ class SemanticBuilder(ast.NodeVisitor):
             )
 
         if isinstance(node, ast.GeneratorExp):
-            return GeneratorExprIR(
+            return GeneratorExpIR(
                 elt=self.parse_expr(node.elt),
                 generators=[self.parse_comp(comp) for comp in node.generators],
                 span=SourceSpan.span(node, self.file_path)
             )
 
         if isinstance(node, ast.Attribute):
-            return AttributeExprIR(
+            return AttributeIR(
                 value=self.parse_expr(node.value),
                 attr=node.attr,
                 span=SourceSpan.span(node, self.file_path),
             )
 
         if isinstance(node, ast.Call):
-            return CallExprIR(
+            return CallIR(
                 func=self.parse_expr(node.func),
                 args=[self.parse_expr(arg) for arg in node.args],
                 keywords=[
-                    KeywordArgIR(
+                    KeywordIR(
                         arg=kw.arg,
                         value=self.parse_expr(kw.value),
                         span=SourceSpan.span(kw.value, self.file_path),

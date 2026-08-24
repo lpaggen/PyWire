@@ -1,6 +1,6 @@
 from common.span import SourceSpan
-from ir.expr_ir import ExprIR
-from ir.arg.param_ir import ArgIR
+from ir.expr.expr_ir import ExprIR
+from ir.arg.arg_ir import ArgIR
 from dataclasses import dataclass
 
 

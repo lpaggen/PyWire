@@ -1,6 +1,6 @@
 from common.span import SourceSpan
-from .expr_ir import ExprIR
-from .ir_node import IRNode
+from ir.expr.expr_ir import ExprIR
+from ir.ir_node import IRNode
 from generated import _pb2
 from dataclasses import dataclass
 

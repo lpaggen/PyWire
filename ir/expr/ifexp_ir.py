@@ -1,11 +1,11 @@
 from common.span import SourceSpan
 from generated import _pb2
-from ir.expr_ir import ExprIR
+from ir.expr.expr_ir import ExprIR
 from dataclasses import dataclass
 
 
 @dataclass
-class IfExprIR(ExprIR):
+class IfExpIR(ExprIR):
     test: ExprIR
     body: ExprIR
     orelse: ExprIR

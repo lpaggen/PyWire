@@ -2,10 +2,10 @@ from dataclasses import dataclass
 
 from common.span import SourceSpan
 from generated import _pb2
-from ir.expr_ir import ExprIR
+from ir.expr.expr_ir import ExprIR
 from common.typeparam_ir import TypeParamIR
-from ir.arg.param_ir import ArgIR
-from ir.stmt_ir import StmtIR
+from ir.arg.arg_ir import ArgIR
+from ir.stmt.stmt_ir import StmtIR
 
 
 @dataclass

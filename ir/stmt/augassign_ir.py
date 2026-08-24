@@ -1,5 +1,5 @@
 from .stmt_ir import StmtIR
-from .expr_ir import ExprIR
+from ir.expr.expr_ir import ExprIR
 from common.span import SourceSpan
 from common.operators import Operator
 from generated import _pb2

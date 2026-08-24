@@ -1,11 +1,12 @@
-from .expr_ir import ExprIR
+from dataclasses import dataclass
+
 from common.span import SourceSpan
 from generated import _pb2
-from dataclasses import dataclass
+from ir.expr.expr_ir import ExprIR
 
 
 @dataclass
-class KeywordArgIR(ExprIR):
+class KeywordIR(ExprIR):
     arg: str | None
     value: ExprIR
     span: SourceSpan | None = None
@@ -21,10 +22,10 @@ class KeywordArgIR(ExprIR):
 
 
 @dataclass
-class CallExprIR(ExprIR):
+class CallIR(ExprIR):
     func: ExprIR
     args: list[ExprIR]
-    keywords: list[KeywordArgIR]
+    keywords: list[KeywordIR]
     span: SourceSpan | None = None
 
     def to_proto(self):

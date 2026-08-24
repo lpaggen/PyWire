@@ -71,7 +71,7 @@ class DictCompIR(ExprIR):
         )
 
 @dataclass
-class GeneratorExprIR(ExprIR):
+class GeneratorExpIR(ExprIR):
     elt: ExprIR
     generators: list[CompIR]
     span: SourceSpan

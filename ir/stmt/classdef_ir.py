@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from common.span import SourceSpan
 from common.typeparam_ir import TypeParamIR
 from generated import _pb2
-from ir.expr.callexpr_ir import KeywordArgIR
+from ir.expr.call_ir import KeywordIR
 from .stmt_ir import StmtIR, stmt_to_proto
 from ..expr.expr_ir import ExprIR
 from .decl_ir import DeclIR
@@ -16,7 +16,7 @@ class ClassDefIR(DeclIR):
     scope_id: int        # parent scope
     body_scope_id: int   # class-local scope
     name: str
-    keywords: list[KeywordArgIR]
+    keywords: list[KeywordIR]
     body: list[StmtIR]
     bases: list[ExprIR]  # base classes: Base, nn.Module, etc.
     decorator_list: list[ExprIR]

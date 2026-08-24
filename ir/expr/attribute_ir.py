@@ -6,12 +6,13 @@ from ir.expr.expr_ir import ExprIR
 
 
 @dataclass
-class StarredIR(ExprIR):
+class AttributeIR(ExprIR):
     value: ExprIR
+    attr: str
     span: SourceSpan
 
     def to_proto(self):
-        proto = _pb2.StarredIR(value=self.value.to_proto())
+        proto = _pb2.AttributeExprIR(attr=self.attr, value=self.value.to_proto())
         if self.span is not None:
             proto.span.CopyFrom(self.span.to_proto())
-        return _pb2.ExprIR(starred=proto)
+        return _pb2.ExprIR(attribute=proto)

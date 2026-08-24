@@ -1,15 +1,15 @@
-from ir.scope_ir import ScopeIR
-from ir.symbol_ir import SymbolIR
+from ir.metadata.scope_ir import ScopeIR
+from ir.metadata.symbol_ir import SymbolIR
 from ir.program_ir import ProgramIR
-from ir.import_ir import ImportIR
-from ir.expr_ir import ExprIR
+from ir.stmt.import_ir import ImportIR
+from ir.expr.expr_ir import ExprIR
 
 from common.span import SourceSpan
 
-from ir.binding_ir import BindingIR
+from ir.stmt.binding_ir import BindingIR
 from ir.stmt.functiondef_ir import FunctionDefIR
 from ir.stmt.classdef_ir import ClassDefIR
-from ir.annotation_ir import AnnotationIR
+from ir.annotation.annotation_ir import AnnotationIR
 
 from common.kind import ScopeKind
 
