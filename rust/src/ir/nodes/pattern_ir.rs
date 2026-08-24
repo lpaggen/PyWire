@@ -47,9 +47,9 @@ pub struct MappingPatternIR {
 #[derive(Debug, Clone)]
 pub struct ClassPatternIR {
     pub cls: ExprIR,
-    pub positional_patterns: Vec<PatternIR>,
-    pub keyword_names: Vec<String>,
-    pub keyword_patterns: Vec<PatternIR>,
+    pub patterns: Vec<PatternIR>,
+    pub kwd_attrs: Vec<String>,
+    pub kwd_patterns: Vec<PatternIR>,
     pub span: Option<SourceSpan>,
 }
 

@@ -1,9 +1,9 @@
-use crate::ir::{expr_ir::ExprIR, nodes::ParamIR, span_ir::SourceSpan};
+use crate::ir::{expr_ir::ExprIR, nodes::TypeParamIR, span_ir::SourceSpan};
 
 #[derive(Debug, Clone)]
 pub struct TypeAliasIR {
     pub name: ExprIR,
-    pub type_params: Vec<ParamIR>,
+    pub type_params: Vec<TypeParamIR>,
     pub value: ExprIR,
     pub span: Option<SourceSpan>,
 }

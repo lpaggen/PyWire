@@ -4,7 +4,7 @@ use crate::ir::span_ir::SourceSpan;
 #[derive(Debug, Clone)]
 pub struct CompIR {
     pub target: Box<ExprIR>,
-    pub iterable: Box<ExprIR>,
+    pub iter: Box<ExprIR>,
     pub ifs: Vec<ExprIR>,
     pub is_async: bool,
     pub span: Option<SourceSpan>,
@@ -33,7 +33,7 @@ pub struct DictCompIR {
 }
 
 #[derive(Debug, Clone)]
-pub struct GeneratorExprIR {
+pub struct GeneratorExpIR {
     pub elt: Box<ExprIR>,
     pub generators: Vec<CompIR>,
     pub span: Option<SourceSpan>,

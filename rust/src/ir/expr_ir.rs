@@ -1,11 +1,15 @@
 use crate::ir::nodes::{
-    AttributeExprIR, AwaitIR, BinOpIR, BoolOpIR, BooleanIR, BytesIR, CallExprIR, CompareIR, ComplexIR, DictCompIR, DictIR, EllipsisIR, FloatIR, FormattedValueIR, GeneratorExprIR, IdentifierIR, IfExprIR, IntegerIR, InterpolationIR, JoinedStrIR, ListCompIR, ListIR, NamedExprIR, NoneIR, SetCompIR, SetIR, SliceIR, StarredIR, StringIR, SubscriptIR, TemplateStrIR, TupleIR, UnaryOpIR, YieldFromIR, YieldIR,
+    AttributeIR, AwaitIR, BinOpIR, BoolOpIR, BooleanIR, BytesIR, CallIR, CompareIR, ComplexIR,
+    DictCompIR, DictIR, EllipsisIR, FloatIR, FormattedValueIR, GeneratorExpIR, IfExpIR, IntegerIR,
+    InterpolationIR, JoinedStrIR, ListCompIR, ListIR, NameIR, NamedExprIR, NoneIR, SetCompIR,
+    SetIR, SliceIR, StarredIR, StringIR, SubscriptIR, TemplateStrIR, TupleIR, UnaryOpIR,
+    YieldFromIR, YieldIR,
 };
 
 #[derive(Debug, Clone)]
 pub enum ExprIR {
     Constant(ConstantIR),
-    IdentifierExpr(IdentifierIR),
+    Name(NameIR),
     JoinedStr(JoinedStrIR),
     FormattedValue(FormattedValueIR),
     TemplateStr(TemplateStrIR),
@@ -14,7 +18,7 @@ pub enum ExprIR {
     TupleExpr(TupleIR),
     SliceExpr(SliceIR),
     SubscriptExpr(SubscriptIR),
-    AttributeExpr(AttributeExprIR),
+    Attribute(AttributeIR),
     SetExpr(SetIR),
     DictExpr(DictIR),
 
@@ -27,12 +31,12 @@ pub enum ExprIR {
     BoolOpExpr(BoolOpIR),
     UnaryOpExpr(UnaryOpIR),
     CompareExpr(CompareIR),
-    CallExpr(CallExprIR),
+    Call(CallIR),
     NamedExpr(NamedExprIR), // := , named NamedExpr in Python for some reason
 
-    IfExpr(IfExprIR),
+    IfExp(IfExpIR),
 
-    GeneratorExpr(GeneratorExprIR),
+    GeneratorExp(GeneratorExpIR),
     ListComp(ListCompIR),
     DictComp(DictCompIR),
     SetComp(SetCompIR),

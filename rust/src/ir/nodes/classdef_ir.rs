@@ -1,19 +1,21 @@
 use crate::ir::{
     expr_ir::ExprIR,
-    nodes::{ArgIR, TypeParamIR},
+    nodes::{KeywordIR, TypeParamIR},
     span_ir::SourceSpan,
     stmt_ir::StmtIR,
 };
 
 #[derive(Debug, Clone)]
-pub struct AsyncFunctionDefIR {
+pub struct ClassDefIR {
+    pub id: i64,
+    pub symbol_id: i64,
     pub name: String,
-    pub args: Vec<ArgIR>,
+    pub scope_id: i64,
+    pub body_scope_id: i64,
     pub body: Vec<StmtIR>,
+    pub bases: Vec<ExprIR>,
+    pub keywords: Vec<KeywordIR>,
     pub decorator_list: Vec<ExprIR>,
-    pub returns: Option<ExprIR>,
-    pub type_comment: Option<String>,
-    pub scope_id: u64,
     pub type_params: Vec<TypeParamIR>,
     pub span: Option<SourceSpan>,
 }
