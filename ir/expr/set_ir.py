@@ -6,16 +6,16 @@ from ir.expr_ir import ExprIR
 class SetIR(ExprIR):
     def __init__(
         self,
-        elements: list[ExprIR],
+        elts: list[ExprIR],
         span: SourceSpan,
     ):
         super().__init__(span=span)
-        self.elements = elements
+        self.elts = elts
 
     def to_proto(self):
         proto = _pb2.SetIR()
 
-        proto.elements.extend([i.to_proto() for i in self.elements])
+        proto.elts.extend([elt.to_proto() for elt in self.elts])
 
         if self.span is not None:
             proto.span.CopyFrom(self.span.to_proto())

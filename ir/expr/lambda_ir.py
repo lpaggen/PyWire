@@ -1,12 +1,12 @@
 from common.span import SourceSpan
 from ir.expr_ir import ExprIR
-from ir.function_ir import ParamIR
+from ir.arg.param_ir import ArgIR
 
 
 class LambdaIR(ExprIR):
     def __init__(
         self,
-        args: list[ParamIR],
+        args: list[ArgIR],
         body: ExprIR,
         scope_id: int,
         span: SourceSpan,

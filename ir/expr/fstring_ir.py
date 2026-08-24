@@ -50,7 +50,7 @@ class JoinedStrIR(ExprIR):
 
 @dataclass
 class TemplateStrIR(ExprIR):
-    value: ExprIR
+    values: list[ExprIR]
     span: SourceSpan | None
 
     def to_proto(self):
@@ -65,7 +65,7 @@ class TemplateStrIR(ExprIR):
 @dataclass
 class InterpolationIR(ExprIR):
     value: ExprIR
-    source: str
+    str: str | None
     conversion: Conversion
     format_spec: ExprIR | None
     span: SourceSpan | None
@@ -74,7 +74,7 @@ class InterpolationIR(ExprIR):
         return _pb2.ExprIR(
             interpolation=_pb2.InterpolationIR(
                 value=self.value.to_proto(),
-                source=self.source,
+                str=self.str,
                 conversion=int(self.conversion),
                 format_spec=(
                     self.format_spec.to_proto()

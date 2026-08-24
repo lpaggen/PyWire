@@ -127,32 +127,32 @@ class ClassPatternIR(PatternIR):
     def __init__(
         self,
         cls: ExprIR,
-        positional_patterns: list[PatternIR],
-        keyword_names: list[str],
-        keyword_patterns: list[PatternIR],
+        patterns: list[PatternIR],
+        kwd_attrs: list[str],
+        kwd_patterns: list[PatternIR],
         span: SourceSpan,
     ):
         super().__init__(span=span)
         self.cls = cls
-        self.positional_patterns = positional_patterns
-        self.keyword_names = keyword_names
-        self.keyword_patterns = keyword_patterns
+        self.patterns = patterns
+        self.kwd_attrs = kwd_attrs
+        self.kwd_patterns = kwd_patterns
 
     def to_proto(self):
         proto = _pb2.ClassPatternIR()
 
         proto.cls.CopyFrom(self.cls.to_proto())
 
-        proto.positional_patterns.extend([
+        proto.patterns.extend([
             pattern.to_proto()
-            for pattern in self.positional_patterns
+            for pattern in self.patterns
         ])
 
-        proto.keyword_names.extend(self.keyword_names)
+        proto.kwd_attrs.extend(self.kwd_attrs)
 
-        proto.keyword_patterns.extend([
+        proto.kwd_patterns.extend([
             pattern.to_proto()
-            for pattern in self.keyword_patterns
+            for pattern in self.kwd_patterns
         ])
 
         if self.span is not None:

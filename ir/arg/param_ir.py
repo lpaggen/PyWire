@@ -6,7 +6,7 @@ from ir.annotation_ir import AnnotationIR
 from ir.ir_node import IRNode
 
 
-class ParamKind(Enum):
+class ArgKind(Enum):
     POSITIONAL_ONLY = 1
     POSITIONAL_OR_KEYWORD = 2
     VAR_POSITIONAL = 3
@@ -14,27 +14,27 @@ class ParamKind(Enum):
     VAR_KEYWORD = 5
 
 
-class ParamIR(IRNode):
+class ArgIR(IRNode):
     def __init__(
         self,
         symbol_id: int,
-        name: str,
-        kind: ParamKind,
+        arg: str,
+        kind: ArgKind,
         annotation: AnnotationIR,
         default,
         span: SourceSpan,
     ):
         self.symbol_id = symbol_id
-        self.name = name
+        self.arg = arg
         self.kind = kind
         self.annotation = annotation
         self.default = default
         self.span = span
 
     def to_proto(self):
-        proto = _pb2.ParamIR(
+        proto = _pb2.ArgIR(
             symbol_id=self.symbol_id,
-            name=self.name,
+            arg=self.arg,
             kind=self.kind.value
         )
 
@@ -42,7 +42,7 @@ class ParamIR(IRNode):
             proto.annotation.CopyFrom(self.annotation.to_proto())
 
         if self.default is not None:
-            proto.default_value.CopyFrom(self.default.to_proto())
+            proto.default.CopyFrom(self.default.to_proto())
 
         if self.span is not None:
             proto.span.CopyFrom(self.span.to_proto())

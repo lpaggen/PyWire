@@ -19,28 +19,6 @@ pub enum BindingKind {
     AnnAssign,
 }
 
-impl BindingIR {
-    pub fn new(
-        id: i64,
-        target_id: i64,
-        annotation: Option<AnnotationIR>,
-        kind: BindingKind,
-        value: Option<ExprIR>,
-        scope_id: i64,
-        span: Option<SourceSpan>,
-    ) -> Self {
-        Self {
-            id,
-            target_id,
-            annotation,
-            kind,
-            value: value.map(Box::new),
-            scope_id,
-            span,
-        }
-    }
-}
-
 impl From<i32> for BindingKind {
     fn from(value: i32) -> Self {
         match value {

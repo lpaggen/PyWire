@@ -1,5 +1,6 @@
 import ast
 
+from common.typeparam_ir import ParamSpecIR, TypeVarIR, TypeVarTupleIR
 from ir.assert_ir import AssertIR
 from ir.asyncfor_ir import AsyncForIR
 from ir.asyncfunctiondef_ir import AsyncFunctionDefIR
@@ -11,7 +12,7 @@ from ir.complex_ir import ComplexIR
 from ir.comprehension_ir import CompIR, DictCompIR, GeneratorExprIR, ListCompIR, SetCompIR
 from ir.continue_ir import ContinueIR
 from ir.delete_ir import DeleteIR
-from ir.dict_ir import DictEntryIR, DictIR
+from ir.dict_ir import DictIR
 from ir.excepthandler_ir import ExceptHandlerIR
 from ir.expr_ir import ExprIR
 from ir.fstring_ir import Conversion, FormattedValueIR, JoinedStrIR
@@ -36,7 +37,8 @@ from .ir_builder import IRBuilder
 from ir.program_ir import ProgramIR
 from common.span import SourceSpan
 from ir.annotation_ir import AnnotationIR, AnnotationHeadIR
-from ir.function_ir import ParamIR, ParamKind, ReturnIR
+from ir.arg.param_ir import ArgIR, ArgKind
+from ir.stmt.return_ir import ReturnIR
 from ir.identifier_ir import IdentifierIR
 from ir.attributeexpr_ir import AttributeExprIR
 from common.operators import Operator
@@ -220,6 +222,35 @@ class SemanticBuilder(ast.NodeVisitor):
             span=SourceSpan.span(node, self.file_path),
         )
 
+    def lower_type_param(self, param: ast.type_param):
+        span = SourceSpan.span(param, self.file_path)
+        default_value = (
+            self.parse_expr(param.default_value)
+            if param.default_value is not None
+            else None
+        )
+
+        if isinstance(param, ast.TypeVar):
+            return TypeVarIR(
+                name=param.name,
+                bound=self.parse_expr(param.bound) if param.bound is not None else None,
+                default_value=default_value,
+                span=span,
+            )
+        if isinstance(param, ast.ParamSpec):
+            return ParamSpecIR(
+                name=param.name,
+                default_value=default_value,
+                span=span,
+            )
+        if isinstance(param, ast.TypeVarTuple):
+            return TypeVarTupleIR(
+                name=param.name,
+                default_value=default_value,
+                span=span,
+            )
+        raise NotImplementedError(f"Unsupported type parameter: {type(param).__name__}")
+
     def lower_statements(self, statements):
         """Lower statements in source order and flatten multi-binding nodes."""
         lowered_statements = []
@@ -337,10 +368,12 @@ class SemanticBuilder(ast.NodeVisitor):
             name=node.name,
             scope_id=binding_scope,
             body_scope_id=body_scope_id,
-            params=params,
+            args=params,
             body=body,
             returns=self.lower_annotation(node.returns) if node.returns else None,
-            decorators=[self.parse_expr(d) for d in node.decorator_list],
+            decorator_list=[self.parse_expr(d) for d in node.decorator_list],
+            type_comment=node.type_comment,
+            type_params=[self.lower_type_param(param) for param in node.type_params],
             span=SourceSpan.span(node, self.file_path),
         )
 
@@ -376,7 +409,16 @@ class SemanticBuilder(ast.NodeVisitor):
             body_scope_id=class_scope_id,
             body=body,
             bases=[self.parse_expr(base) for base in node.bases],
-            decorators=[self.parse_expr(d) for d in node.decorator_list],
+            keywords=[
+                KeywordArgIR(
+                    arg=keyword.arg,
+                    value=self.parse_expr(keyword.value),
+                    span=SourceSpan.span(keyword, self.file_path),
+                )
+                for keyword in node.keywords
+            ],
+            decorator_list=[self.parse_expr(d) for d in node.decorator_list],
+            type_params=[self.lower_type_param(param) for param in node.type_params],
             span=SourceSpan.span(node, self.file_path),
         )
 
@@ -474,9 +516,10 @@ class SemanticBuilder(ast.NodeVisitor):
             name=node.name,
             args=args,
             body=body,
-            decorators=[self.parse_expr(d) for d in node.decorator_list],
+            decorator_list=[self.parse_expr(d) for d in node.decorator_list],
             returns=self.parse_expr(node.returns) if node.returns is not None else None,
             type_comment=node.type_comment,
+            type_params=[self.lower_type_param(param) for param in node.type_params],
             scope_id=function_scope_id,
             span=SourceSpan.span(node, self.file_path),
         )
@@ -616,12 +659,12 @@ class SemanticBuilder(ast.NodeVisitor):
             ):
                 return ClassPatternIR(
                     cls=self.parse_expr(cls),
-                    positional_patterns=[
+                    patterns=[
                         self.parse_pattern(p)
                         for p in patterns
                     ],
-                    keyword_names=kwd_names,
-                    keyword_patterns=[
+                    kwd_attrs=kwd_names,
+                    kwd_patterns=[
                         self.parse_pattern(p)
                         for p in kwd_patterns
                     ],
@@ -849,9 +892,9 @@ class SemanticBuilder(ast.NodeVisitor):
     def lower_single_param(
         self,
         arg: ast.arg,
-        kind: ParamKind,
+        kind: ArgKind,
         default: ExprIR | None,
-    ) -> ParamIR:
+    ) -> ArgIR:
         symbol_id = self.builder.declare_symbol(
             name=arg.arg,
             kind=SymbolKind.SYMBOL_PARAM,
@@ -859,9 +902,9 @@ class SemanticBuilder(ast.NodeVisitor):
             span=SourceSpan.span(arg, self.file_path),
         )
 
-        return ParamIR(
+        return ArgIR(
             symbol_id=symbol_id,
-            name=arg.arg,
+            arg=arg.arg,
             kind=kind,
             annotation=(
                 self.lower_annotation(arg.annotation)
@@ -872,7 +915,7 @@ class SemanticBuilder(ast.NodeVisitor):
             span=SourceSpan.span(arg, self.file_path),
         )
 
-    def lower_params(self, args: ast.arguments) -> list[ParamIR]:
+    def lower_params(self, args: ast.arguments) -> list[ArgIR]:
         """lowers ast.arguments[posonlyargs, args, vararg, kwonlyargs, kw_defaults, kwarg, defaults]"""
         params = []
 
@@ -885,9 +928,9 @@ class SemanticBuilder(ast.NodeVisitor):
         # there are N posonlyargs in order, then there are M posorkeyword
         for i, arg in enumerate(positional):
             if i < len(positional):
-                kind = ParamKind.POSITIONAL_ONLY
+                kind = ArgKind.POSITIONAL_ONLY
             else:
-                kind = ParamKind.POSITIONAL_OR_KEYWORD
+                kind = ArgKind.POSITIONAL_OR_KEYWORD
 
             # resolve defaults, start with None, then resolve_expr existing defaults
             # recall defaults can only occur after non-defaults
@@ -902,7 +945,7 @@ class SemanticBuilder(ast.NodeVisitor):
             params.append(
                 self.lower_single_param(
                     arg=args.vararg, 
-                    kind=ParamKind.VAR_POSITIONAL,
+                    kind=ArgKind.VAR_POSITIONAL,
                     default=None
                 )
             )
@@ -911,14 +954,14 @@ class SemanticBuilder(ast.NodeVisitor):
         # ex -> *d, e, f=2 -> kwonlyargs[e, f] , kw_defaults[None, 2]
         for arg, _default in zip(args.kwonlyargs, args.kw_defaults):
             default = self.parse_expr(_default) if default is not None else None
-            params.append(self.lower_single_param(arg=arg, kind=ParamKind.KEYWORD_ONLY, default=default))
+            params.append(self.lower_single_param(arg=arg, kind=ArgKind.KEYWORD_ONLY, default=default))
 
         # **arg
         if args.kwarg is not None:
             params.append(
                 self.lower_single_param(
                     arg=args.kwarg,
-                    kind=ParamKind.VAR_KEYWORD,
+                    kind=ArgKind.VAR_KEYWORD,
                     default=None,
                 )
             )
@@ -928,7 +971,7 @@ class SemanticBuilder(ast.NodeVisitor):
     def parse_comp(self, comp: ast.comprehension) -> CompIR:
         return CompIR(
             target=self.parse_expr(comp.target),
-            iterable=self.parse_expr(comp.iter),
+            iter=self.parse_expr(comp.iter),
             ifs=[self.parse_expr(cond) for cond in comp.ifs],
             is_async=bool(comp.is_async),
             span=SourceSpan.span(comp, self.file_path),
@@ -1065,7 +1108,7 @@ class SemanticBuilder(ast.NodeVisitor):
 
             self.scope_stack.append(lambda_scope_id)
 
-            # params and args are the same thing here, ParamIR has all we need
+            # The semantic ArgIR also carries the normalized default and parameter kind.
             args = self.lower_params(node.args)
 
             body = self.parse_expr(node.body)
@@ -1088,27 +1131,24 @@ class SemanticBuilder(ast.NodeVisitor):
 
         if isinstance(node, ast.Name):
             return IdentifierIR(
-                name=node.id,
+                id=node.id,
                 use_scope_id=self.current_scope(),
                 span=SourceSpan.span(node, self.file_path),
             )
 
         if isinstance(node, ast.Set):
             return SetIR(
-                elements=[self.parse_expr(element) for element in node.elts],
+                elts=[self.parse_expr(element) for element in node.elts],
                 span=SourceSpan.span(node, self.file_path),
             )
 
         if isinstance(node, ast.Dict):
             return DictIR(
-                entries=[
-                    DictEntryIR(
-                        key=self.parse_expr(key) if key is not None else None,
-                        value=self.parse_expr(value),
-                        span=SourceSpan.span(value, self.file_path),
-                    )
-                    for key, value in zip(node.keys, node.values)
+                keys=[
+                    self.parse_expr(key) if key is not None else None
+                    for key in node.keys
                 ],
+                values=[self.parse_expr(value) for value in node.values],
                 span=SourceSpan.span(node, self.file_path),
             )
 
@@ -1121,18 +1161,18 @@ class SemanticBuilder(ast.NodeVisitor):
 
         if isinstance(node, ast.Attribute):
             return AttributeExprIR(
-                base=self.parse_expr(node.value),
+                value=self.parse_expr(node.value),
                 attr=node.attr,
                 span=SourceSpan.span(node, self.file_path),
             )
 
         if isinstance(node, ast.Call):
             return CallExprIR(
-                callee=self.parse_expr(node.func),
+                func=self.parse_expr(node.func),
                 args=[self.parse_expr(arg) for arg in node.args],
-                kwargs=[
+                keywords=[
                     KeywordArgIR(
-                        name=kw.arg,
+                        arg=kw.arg,
                         value=self.parse_expr(kw.value),
                         span=SourceSpan.span(kw.value, self.file_path),
                     )
@@ -1158,7 +1198,7 @@ class SemanticBuilder(ast.NodeVisitor):
 
         if isinstance(node, ast.List):
             return ListIR(
-                elements=[self.parse_expr(arg) for arg in node.elts],
+                elts=[self.parse_expr(arg) for arg in node.elts],
                 span=SourceSpan.span(node, self.file_path)
             )
 
@@ -1179,14 +1219,14 @@ class SemanticBuilder(ast.NodeVisitor):
 
         if isinstance(node, ast.Subscript):
             return SubscriptIR(
-                target=self.parse_expr(node.value),
-                subscript=self.parse_expr(node.slice),
+                value=self.parse_expr(node.value),
+                slice=self.parse_expr(node.slice),
                 span=SourceSpan.span(node, self.file_path)
             )
 
         if isinstance(node, ast.Tuple):
             return TupleIR(
-                elements=tuple([self.parse_expr(arg) for arg in node.elts]),
+                elts=tuple([self.parse_expr(arg) for arg in node.elts]),
                 span=SourceSpan.span(node, self.file_path)
             )
 
@@ -1222,7 +1262,7 @@ class SemanticBuilder(ast.NodeVisitor):
         if isinstance(node, ast.Interpolation):
             return InterpolationIR(
                 value=self.parse_expr(node.value),
-                source=node.str,
+                str=node.str,
                 conversion=Conversion(node.conversion),
                 format_spec=(
                     self.parse_expr(node.format_spec)

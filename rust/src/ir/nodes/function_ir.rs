@@ -35,39 +35,10 @@ pub struct ParamIR {
     pub span: Option<SourceSpan>,
 }
 
-impl ParamIR {
-    pub fn new(
-        symbol_id: i64,
-        name: impl Into<String>,
-        kind: ParamKind,
-        annotation: Option<AnnotationIR>,
-        default: Option<ExprIR>,
-        span: Option<SourceSpan>,
-    ) -> Self {
-        Self {
-            symbol_id,
-            name: name.into(),
-            kind,
-            annotation,
-            default: default.map(Box::new),
-            span,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct ReturnIR {
     pub value: Option<Box<ExprIR>>,
     pub span: Option<SourceSpan>,
-}
-
-impl ReturnIR {
-    pub fn new(value: Option<ExprIR>, span: Option<SourceSpan>) -> Self {
-        Self {
-            value: value.map(Box::new),
-            span,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]

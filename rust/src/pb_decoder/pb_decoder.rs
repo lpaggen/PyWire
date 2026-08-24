@@ -1079,7 +1079,7 @@ impl PBDecoder {
 
             None => Err("statement has no kind".into()),
 
-            _ => Err("unsupported statement kind".into()),
+            // _ => Err("unsupported statement kind".into()),
         }
     }
 

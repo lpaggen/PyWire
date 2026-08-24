@@ -4,18 +4,18 @@ from generated import _pb2
 
 
 class ListIR(ExprIR):
-    def __init__(self, elements: list[ExprIR], span: SourceSpan = None):
+    def __init__(self, elts: list[ExprIR], span: SourceSpan = None):
         super().__init__(span=span, value=None)
         self.span = span
-        self.elements = elements
+        self.elts = elts
 
     def __repr__(self):
-        return "ListIR<" + str(self.elements) + ">"
+        return "ListIR<" + str(self.elts) + ">"
 
     def to_proto(self):
         proto = _pb2.ListIR()
 
-        proto.elements.extend([i.to_proto() for i in self.elements])
+        proto.elts.extend([elt.to_proto() for elt in self.elts])
 
         if self.span is not None:
             proto.span.CopyFrom(self.span.to_proto())

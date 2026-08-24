@@ -9,14 +9,3 @@ pub struct AugAssignIR {
     pub value: Box<ExprIR>,
     pub span: Option<SourceSpan>,
 }
-
-impl AugAssignIR {
-    pub fn new(target: ExprIR, op: Operator, value: ExprIR, span: Option<SourceSpan>) -> Self {
-        Self {
-            target: Box::new(target),
-            op,
-            value: Box::new(value),
-            span,
-        }
-    }
-}

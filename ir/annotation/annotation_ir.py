@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import List
 from common.span import SourceSpan
 from ir.expr.expr_ir import ExprIR
@@ -5,12 +6,12 @@ from generated import _pb2
 from ir.ir_node import IRNode
 
 
+@dataclass
 class AnnotationHeadIR(IRNode):
-    def __init__(self, root: str, attrs: list[str], scope_id: int, span: SourceSpan):
-        self.root = root  # "torch"
-        self.attrs = attrs  # ["Tensor"]
-        self.scope_id = scope_id
-        self.span = span
+    root: str
+    attrs: list[str]
+    scope_id: int
+    span: SourceSpan
 
     def to_proto(self):
         proto = _pb2.AnnotationHeadIR(

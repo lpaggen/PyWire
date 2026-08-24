@@ -8,21 +8,21 @@ class CompIR(IRNode):
     def __init__(
         self,
         target: ExprIR,
-        iterable: ExprIR,
+        iter: ExprIR,
         ifs: list[ExprIR],
         is_async: bool,
         span: SourceSpan
     ):
         self.span = span
         self.target = target
-        self.iterable = iterable
+        self.iter = iter
         self.ifs = ifs
         self.is_async = is_async
 
     def to_proto(self):
         return _pb2.CompIR(
             target=self.target.to_proto(),
-            iterable=self.iterable.to_proto(),
+            iter=self.iter.to_proto(),
             ifs=[cond.to_proto() for cond in self.ifs],
             is_async=self.is_async,
             span=self.span.to_proto(),

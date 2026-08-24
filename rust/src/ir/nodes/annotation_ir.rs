@@ -13,9 +13,3 @@ pub struct AnnotationHeadIR {
     pub scope_id: i64,
     pub span: Option<SourceSpan>,
 }
-
-impl AnnotationIR {
-    pub fn new(head: AnnotationHeadIR, args: Vec<ExprIR>) -> Self {
-        Self { head, args }
-    }
-}

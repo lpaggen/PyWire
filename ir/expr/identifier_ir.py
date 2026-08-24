@@ -4,18 +4,18 @@ from .expr_ir import ExprIR
 
 
 class IdentifierIR(ExprIR):
-    def __init__(self, name: str, use_scope_id: int, span: SourceSpan):
-        super().__init__(value=name, span=span)
-        self.name = name
+    def __init__(self, id: str, use_scope_id: int, span: SourceSpan):
+        super().__init__(value=id, span=span)
+        self.id = id
         self.use_scope_id = use_scope_id
         self.span = span
 
     def __repr__(self):
-        return self.name
+        return self.id
 
     def to_proto(self):
         proto = _pb2.IdentifierIR(
-            name=self.name,
+            id=self.id,
             use_scope_id=self.use_scope_id,
         )
 

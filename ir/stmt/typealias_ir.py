@@ -3,14 +3,14 @@ from dataclasses import dataclass
 from common.span import SourceSpan
 from generated import _pb2
 from ir.expr_ir import ExprIR
-from ir.function_ir import ParamIR
+from common.typeparam_ir import TypeParamIR
 from ir.stmt_ir import StmtIR
 
 
 @dataclass
 class TypeAliasIR(StmtIR):
     name: ExprIR
-    type_params: list[ParamIR]
+    type_params: list[TypeParamIR]
     value: ExprIR
     span: SourceSpan
 

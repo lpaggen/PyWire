@@ -4,16 +4,16 @@ from generated import _pb2
 
 
 class KeywordArgIR(ExprIR):
-    def __init__(self, name: str | None, value: ExprIR, span: SourceSpan = None):
+    def __init__(self, arg: str | None, value: ExprIR, span: SourceSpan = None):
         super().__init__(span=span, value=value)  # TODO check if value should be IdentifierIR or not
-        self.name = name
+        self.arg = arg
         self.value = value
         self.span = span
 
     def to_proto(self):
-        proto = _pb2.KeywordArgIR(
-            name=self.name if self.name is not None else "",
-        )
+        proto = _pb2.KeywordArgIR()
+        if self.arg is not None:
+            proto.arg = self.arg
         proto.value.CopyFrom(self.value.to_proto())
         if self.span is not None:
             proto.span.CopyFrom(self.span.to_proto())
@@ -22,19 +22,19 @@ class KeywordArgIR(ExprIR):
 
 class CallExprIR(ExprIR):
     def __init__(
-        self, callee, args: list[ExprIR], kwargs: list[KeywordArgIR], span=None
+        self, func, args: list[ExprIR], keywords: list[KeywordArgIR], span=None
     ):
-        super().__init__(span=span, value=callee)
+        super().__init__(span=span, value=func)
         self.span = span
-        self.callee = callee
+        self.func = func
         self.args = args
-        self.kwargs = kwargs
+        self.keywords = keywords
 
     def to_proto(self):
         return _pb2.ExprIR(
             call=_pb2.CallExprIR(
-                callee=self.callee.to_proto(),
+                func=self.func.to_proto(),
                 args=[arg.to_proto() for arg in self.args],
-                kwargs=[kw.to_proto() for kw in self.kwargs],
+                keywords=[keyword.to_proto() for keyword in self.keywords],
             )
         )

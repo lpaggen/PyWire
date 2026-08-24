@@ -4,9 +4,9 @@ from generated import _pb2
 
 
 class AttributeExprIR(ExprIR):
-    def __init__(self, base: ExprIR, attr: str, span: SourceSpan):
-        super().__init__(span=span, value=base)
-        self.base = base
+    def __init__(self, value: ExprIR, attr: str, span: SourceSpan):
+        super().__init__(span=span, value=value)
+        self.value = value
         self.attr = attr
         self.span = span
 
@@ -15,7 +15,7 @@ class AttributeExprIR(ExprIR):
             attr=self.attr,
         )
 
-        attr_proto.base.CopyFrom(self.base.to_proto())
+        attr_proto.value.CopyFrom(self.value.to_proto())
 
         if self.span is not None:
             attr_proto.span.CopyFrom(self.span.to_proto())

@@ -8,7 +8,7 @@ pub mod pb {
     include!(concat!(env!("OUT_DIR"), "/pdc.ir.rs"));
 }
 
-fn main() -> Result<(), Vec<Diagnostic>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let decoder: PBDecoder = PBDecoder::new("../ir_out/");
 
     let programs: Vec<ProgramIR> = match decoder.decode_dir() {

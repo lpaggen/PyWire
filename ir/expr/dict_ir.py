@@ -1,25 +1,25 @@
 from common.span import SourceSpan
 from ir.expr_ir import ExprIR
-from ir.ir_node import IRNode
-
-
-class DictEntryIR(IRNode):
-    def __init__(
-        self,
-        key: ExprIR | None,
-        value: ExprIR,
-        span: SourceSpan,
-    ):
-        super().__init__(span=span)
-        self.key = key
-        self.value = value
-
+from generated import _pb2
 
 class DictIR(ExprIR):
     def __init__(
         self,
-        entries: list[DictEntryIR],
+        keys: list[ExprIR | None],
+        values: list[ExprIR],
         span: SourceSpan,
     ):
         super().__init__(span=span)
-        self.entries = entries
+        self.keys = keys
+        self.values = values
+
+    def to_proto(self):
+        proto = _pb2.DictIR(
+            keys=[
+                _pb2.DictKeyIR(value=key.to_proto()) if key is not None else _pb2.DictKeyIR()
+                for key in self.keys
+            ],
+            values=[value.to_proto() for value in self.values],
+            span=self.span.to_proto(),
+        )
+        return _pb2.ExprIR(dict=proto)

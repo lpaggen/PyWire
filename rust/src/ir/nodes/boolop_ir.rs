@@ -6,9 +6,3 @@ pub struct BoolOpIR {
     pub op: Operator,
     pub span: Option<SourceSpan>,
 }
-
-impl BoolOpIR {
-    pub fn new(values: Vec<ExprIR>, op: Operator, span: Option<SourceSpan>) -> Self {
-        Self { values, op, span }
-    }
-}
