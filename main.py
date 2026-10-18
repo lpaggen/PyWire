@@ -5,24 +5,24 @@ import ast
 from pathlib import Path
 import time
 
-from frontend.semantic_visitor import SemanticBuilder
+from frontend.converter import from_python_ast
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build custom IR for Python dimension checking."
+        description="Serialize Python 3.14 abstract syntax trees."
     )
     parser.add_argument(
         "paths",
         nargs="*",
-        default=["examples"],
+        default=["example"],
         help="Python files or directories to analyze",
     )
     parser.add_argument(
         "-o",
         "--output",
         default="ir_out",
-        help="Output directory for generated IR files",
+        help="Output directory for serialized AST files",
     )
     return parser.parse_args()
 
@@ -39,11 +39,7 @@ def iter_python_files(paths: list[str]):
 def build_file(path: Path):
     source = path.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(path))
-    builder = SemanticBuilder(
-        module_name=path.stem,
-        file_path=str(path),
-    )
-    return builder.build(tree)
+    return from_python_ast(tree)
 
 
 def main() -> None:
@@ -60,7 +56,7 @@ def main() -> None:
         with open(output_file, "wb") as f:
             f.write(ir.to_proto().SerializeToString())
 
-    print(f"Successfully generated IR in: {time.time() - start:.4f} seconds")
+    print(f"Successfully serialized ASTs in: {time.time() - start:.4f} seconds")
 
 
 if __name__ == "__main__":

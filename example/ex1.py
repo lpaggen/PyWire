@@ -41,40 +41,40 @@ class Point:
 def test_patterns(a):
 
     # ---------------------------------------------------------
-    # ValuePatternIR
-    # SingletonPatternIR
-    # OrPatternIR
+    # MatchValue
+    # MatchSingleton
+    # MatchOr
     # ---------------------------------------------------------
     match a:
-        # ValuePatternIR
+        # MatchValue
         case 1:
             pass
 
-        # ValuePatternIR
+        # MatchValue
         case "foo":
             pass
 
-        # ValuePatternIR - dotted value
+        # MatchValue - dotted value
         case Color.RED:
             pass
 
-        # SingletonPatternIR
+        # MatchSingleton
         case None:
             pass
 
-        # SingletonPatternIR
+        # MatchSingleton
         case True:
             pass
 
-        # SingletonPatternIR
+        # MatchSingleton
         case False:
             pass
 
-        # OrPatternIR containing ValuePatternIR nodes
+        # MatchOr containing MatchValue nodes
         case 2 | 3:
             pass
 
-        # OrPatternIR
+        # MatchOr
         case "yes" | "y":
             pass
 
@@ -83,34 +83,34 @@ def test_patterns(a):
 
 
     # ---------------------------------------------------------
-    # SequencePatternIR
-    # StarPatternIR
-    # CapturePatternIR nested inside sequences
-    # WildcardPatternIR nested inside sequences
+    # MatchSequence
+    # MatchStar
+    # MatchAs captures nested inside sequences
+    # MatchAs wildcards nested inside sequences
     # ---------------------------------------------------------
     match a:
 
-        # SequencePatternIR
-        #   CapturePatternIR("x")
-        #   CapturePatternIR("y")
+        # MatchSequence
+        #   MatchAs(pattern=None, name="x")
+        #   MatchAs(pattern=None, name="y")
         case [x, y]:
             pass
 
-        # SequencePatternIR using tuple syntax
+        # MatchSequence using tuple syntax
         case (x, y, z):
             pass
 
-        # SequencePatternIR
-        #   CapturePatternIR("head")
-        #   StarPatternIR("rest")
+        # MatchSequence
+        #   MatchAs(pattern=None, name="head")
+        #   MatchStar(name="rest")
         case [head, *rest]:
             pass
 
-        # StarPatternIR(name=None)
+        # MatchStar(name=None)
         case [head, *_, tail]:
             pass
 
-        # WildcardPatternIR nested in sequence
+        # MatchAs(pattern=None, name=None) nested in sequence
         case [x, _, y]:
             pass
 
@@ -119,19 +119,19 @@ def test_patterns(a):
 
 
     # ---------------------------------------------------------
-    # MappingPatternIR
+    # MatchMapping
     # ---------------------------------------------------------
     match a:
 
-        # MappingPatternIR
+        # MatchMapping
         case {"x": x}:
             pass
 
-        # MappingPatternIR with multiple keys
+        # MatchMapping with multiple keys
         case {"x": x, "y": y}:
             pass
 
-        # MappingPatternIR with rest
+        # MatchMapping with rest
         case {"x": x, **rest}:
             pass
 
@@ -144,7 +144,7 @@ def test_patterns(a):
 
 
     # ---------------------------------------------------------
-    # ClassPatternIR
+    # MatchClass
     # ---------------------------------------------------------
     match a:
 
@@ -166,19 +166,19 @@ def test_patterns(a):
 
 
     # ---------------------------------------------------------
-    # AsPatternIR
+    # MatchAs
     # ---------------------------------------------------------
     match a:
 
-        # AsPatternIR(
-        #     SequencePatternIR(...),
+        # MatchAs(
+        #     MatchSequence(...),
         #     name="point"
         # )
         case [x, y] as point:
             pass
 
-        # AsPatternIR(
-        #     OrPatternIR(...),
+        # MatchAs(
+        #     MatchOr(...),
         #     name="value"
         # )
         case (1 | 2) as value:
@@ -193,7 +193,7 @@ def test_patterns(a):
 
 
     # ---------------------------------------------------------
-    # CapturePatternIR
+    # MatchAs(pattern=None, name="captured")
     #
     # MUST be last because it matches absolutely anything.
     # ---------------------------------------------------------
@@ -203,7 +203,7 @@ def test_patterns(a):
 
 
     # ---------------------------------------------------------
-    # WildcardPatternIR
+    # MatchAs(pattern=None, name=None)
     #
     # Also MUST be last because it matches absolutely anything.
     # ---------------------------------------------------------

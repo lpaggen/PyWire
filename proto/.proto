@@ -1,810 +1,951 @@
 syntax = "proto3";
 
-package pdc.ir;
+package python.ast;
 
-message SourceSpan {
-  string file = 1;
-  int64 lineno = 2;
-  int64 col_offset = 3;
+message ModNode {
+  oneof kind {
+    Module module = 1;
+    Interactive interactive = 2;
+    Expression expression = 3;
+    FunctionType function_type = 4;
+    Suite suite = 5;
+  }
+}
+
+message Stmt {
+  oneof kind {
+    FunctionDef function_def = 1;
+    AsyncFunctionDef async_function_def = 2;
+    ClassDef class_def = 3;
+    Return return_stmt = 4;
+    Delete delete_stmt = 5;
+    Assign assign = 6;
+    TypeAlias type_alias = 7;
+    AugAssign aug_assign = 8;
+    AnnAssign ann_assign = 9;
+    For for_stmt = 10;
+    AsyncFor async_for = 11;
+    While while_stmt = 12;
+    If if_stmt = 13;
+    With with_stmt = 14;
+    AsyncWith async_with = 15;
+    Match match_stmt = 16;
+    Raise raise_stmt = 17;
+    Try try_stmt = 18;
+    TryStar try_star = 19;
+    Assert assert_stmt = 20;
+    Import import_stmt = 21;
+    ImportFrom import_from = 22;
+    Global global_stmt = 23;
+    Nonlocal nonlocal_stmt = 24;
+    Expr expr_stmt = 25;
+    Pass pass_stmt = 26;
+    Break break_stmt = 27;
+    Continue continue_stmt = 28;
+  }
+}
+
+message ExprNode {
+  oneof kind {
+    BoolOp bool_op = 1;
+    NamedExpr named_expr = 2;
+    BinOp bin_op = 3;
+    UnaryOp unary_op = 4;
+    Lambda lambda = 5;
+    IfExp if_exp = 6;
+    Dict dict = 7;
+    Set set = 8;
+    ListComp list_comp = 9;
+    SetComp set_comp = 10;
+    DictComp dict_comp = 11;
+    GeneratorExp generator_exp = 12;
+    Await await_expr = 13;
+    Yield yield_expr = 14;
+    YieldFrom yield_from = 15;
+    Compare compare = 16;
+    Call call = 17;
+    FormattedValue formatted_value = 18;
+    Interpolation interpolation = 19;
+    JoinedStr joined_str = 20;
+    TemplateStr template_str = 21;
+    Constant constant = 22;
+    Attribute attribute = 23;
+    Subscript subscript = 24;
+    Starred starred = 25;
+    Name name = 26;
+    List list = 27;
+    Tuple tuple = 28;
+    Slice slice = 29;
+  }
+}
+
+message Pattern {
+  oneof kind {
+    MatchValue match_value = 1;
+    MatchSingleton match_singleton = 2;
+    MatchSequence match_sequence = 3;
+    MatchMapping match_mapping = 4;
+    MatchClass match_class = 5;
+    MatchStar match_star = 6;
+    MatchAs match_as = 7;
+    MatchOr match_or = 8;
+  }
+}
+
+message TypeParam {
+  oneof kind {
+    TypeVar type_var = 1;
+    ParamSpec param_spec = 2;
+    TypeVarTuple type_var_tuple = 3;
+  }
+}
+
+message ExceptHandlerNode {
+  oneof kind {
+    ExceptHandler except_handler = 1;
+  }
+}
+
+message BoolOperator {
+  oneof kind {
+    And and_op = 1;
+    Or or_op = 2;
+  }
+}
+
+message BinaryOperator {
+  oneof kind {
+    Add add = 1;
+    Sub sub = 2;
+    Mult mult = 3;
+    MatMult mat_mult = 4;
+    Div div = 5;
+    Mod mod = 6;
+    Pow pow = 7;
+    LShift l_shift = 8;
+    RShift r_shift = 9;
+    BitOr bit_or = 10;
+    BitXor bit_xor = 11;
+    BitAnd bit_and = 12;
+    FloorDiv floor_div = 13;
+  }
+}
+
+message UnaryOperator {
+  oneof kind {
+    Invert invert = 1;
+    Not not_op = 2;
+    UAdd u_add = 3;
+    USub u_sub = 4;
+  }
+}
+
+message ComparisonOperator {
+  oneof kind {
+    Eq eq = 1;
+    NotEq not_eq = 2;
+    Lt lt = 3;
+    LtE lt_e = 4;
+    Gt gt = 5;
+    GtE gt_e = 6;
+    Is is_op = 7;
+    IsNot is_not = 8;
+    In in_op = 9;
+    NotIn not_in = 10;
+  }
+}
+
+message ExprContext {
+  oneof kind {
+    Load load = 1;
+    Store store = 2;
+    Del del = 3;
+  }
+}
+
+message And {}
+message Or {}
+message Add {}
+message Sub {}
+message Mult {}
+message MatMult {}
+message Div {}
+message Mod {}
+message Pow {}
+message LShift {}
+message RShift {}
+message BitOr {}
+message BitXor {}
+message BitAnd {}
+message FloorDiv {}
+message Invert {}
+message Not {}
+message UAdd {}
+message USub {}
+message Eq {}
+message NotEq {}
+message Lt {}
+message LtE {}
+message Gt {}
+message GtE {}
+message Is {}
+message IsNot {}
+message In {}
+message NotIn {}
+message Load {}
+message Store {}
+message Del {}
+
+message Module {
+  repeated Stmt body = 1;
+  repeated TypeIgnore type_ignores = 2;
+}
+
+message Interactive {
+  repeated Stmt body = 1;
+}
+
+message Expression {
+  ExprNode body = 1;
+}
+
+message FunctionType {
+  repeated ExprNode argtypes = 1;
+  ExprNode returns = 2;
+}
+
+message Suite {}
+
+message FunctionDef {
+  string name = 1;
+  Arguments args = 2;
+  repeated Stmt body = 3;
+  repeated ExprNode decorator_list = 4;
+  ExprNode returns = 5;
+  optional string type_comment = 6;
+  repeated TypeParam type_params = 7;
+  optional int64 lineno = 8;
+  optional int64 col_offset = 9;
+  optional int64 end_lineno = 10;
+  optional int64 end_col_offset = 11;
+}
+
+message AsyncFunctionDef {
+  string name = 1;
+  Arguments args = 2;
+  repeated Stmt body = 3;
+  repeated ExprNode decorator_list = 4;
+  ExprNode returns = 5;
+  optional string type_comment = 6;
+  repeated TypeParam type_params = 7;
+  optional int64 lineno = 8;
+  optional int64 col_offset = 9;
+  optional int64 end_lineno = 10;
+  optional int64 end_col_offset = 11;
+}
+
+message ClassDef {
+  string name = 1;
+  repeated ExprNode bases = 2;
+  repeated Keyword keywords = 3;
+  repeated Stmt body = 4;
+  repeated ExprNode decorator_list = 5;
+  repeated TypeParam type_params = 6;
+  optional int64 lineno = 7;
+  optional int64 col_offset = 8;
+  optional int64 end_lineno = 9;
+  optional int64 end_col_offset = 10;
+}
+
+message Return {
+  ExprNode value = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
   optional int64 end_lineno = 4;
   optional int64 end_col_offset = 5;
 }
 
-message ProgramIR {
-  string module_name = 1;
-  string file_path = 2;
-
-  repeated ScopeIR scopes = 3;
-  repeated SymbolIR symbols = 4;
-  repeated ImportIR imports = 5;
-  repeated DeclIR decls = 6;
-  repeated StmtIR body = 7;
+message Delete {
+  repeated ExprNode targets = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message SetIR {
-  repeated ExprIR elts = 1;
-  optional SourceSpan span = 2;
+message Assign {
+  repeated ExprNode targets = 1;
+  ExprNode value = 2;
+  optional string type_comment = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message DictIR {
-  repeated DictKeyIR keys = 1;
-  repeated ExprIR values = 2;
-  optional SourceSpan span = 3;
+message TypeAlias {
+  ExprNode name = 1;
+  repeated TypeParam type_params = 2;
+  ExprNode value = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-// A wrapper is required because protobuf repeated message fields cannot contain null.
-// An empty entry represents Python's None key for a **value dictionary expansion.
-message DictKeyIR {
-  optional ExprIR value = 1;
+message AugAssign {
+  ExprNode target = 1;
+  BinaryOperator op = 2;
+  ExprNode value = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message StarredIR {
-  ExprIR value = 1;
-  optional SourceSpan span = 2;
+message AnnAssign {
+  ExprNode target = 1;
+  ExprNode annotation = 2;
+  ExprNode value = 3;
+  int32 simple = 4;
+  optional int64 lineno = 5;
+  optional int64 col_offset = 6;
+  optional int64 end_lineno = 7;
+  optional int64 end_col_offset = 8;
 }
 
-message ScopeIR {
-  int64 id = 1;
-  string name = 2;
-  ScopeKind kind = 3;
-  optional int64 parent_id = 4;
-  optional SourceSpan span = 5;
-}
-
-enum ScopeKind {
-  SCOPE_UNKNOWN = 0;
-  SCOPE_MODULE = 1;
-  SCOPE_FUNCTION = 2;
-  SCOPE_CLASS = 3;
-  SCOPE_BLOCK = 4;
-}
-
-message SymbolIR {
-  int64 id = 1;
-  string name = 2;
-  SymbolKind kind = 3;
-  int64 scope_id = 4;
-  optional SourceSpan span = 5;
-}
-
-enum SymbolKind {
-  SYMBOL_UNKNOWN = 0;
-  SYMBOL_VARIABLE = 1;
-  SYMBOL_FUNCTION = 2;
-  SYMBOL_CLASS = 3;
-  SYMBOL_PARAM = 4;
-  SYMBOL_MODULE_ALIAS = 5;
-}
-
-message ImportIR {
-  int64 id = 1;
-  int64 local_symbol_id = 2;
-  int64 scope_id = 3;
-
-  ImportKind kind = 4;
-  string module_name = 5;
-  optional string imported_name = 6;
-  optional string alias = 7;
-  int64 relative_level = 8;
-
-  optional SourceSpan span = 9;
-}
-
-enum ImportKind {
-  IMPORT_UNKNOWN = 0;
-  IMPORT_MODULE = 1;
-  IMPORT_FROM = 2;
-  IMPORT_MODULE_ALIAS = 3;
-}
-
-message DeclIR {
-  oneof kind {
-    BindingIR binding = 1;
-    FunctionDefIR function = 2;
-    ClassDefIR class_decl = 3;
-  }
-}
-
-message StmtIR {
-  oneof kind {
-    BindingIR binding = 1;
-    AugAssignIR aug_assign = 2;
-    ReturnIR return_stmt = 3;
-    ExprStmtIR expr_stmt = 4;
-    IfIR if_stmt = 5;
-    ForLoopIR for_loop = 6;
-    WhileLoopIR while_loop = 7;
-    ImportIR import_stmt = 8;
-    FunctionDefIR function = 9;
-    ClassDefIR class_decl = 10;
-    MatchIR match = 11;
-    AssertIR assert_stmt = 12;
-    DeleteIR delete_stmt = 13;
-    RaiseIR raise_stmt = 14;
-    GlobalIR global_stmt = 15;
-    NonlocalIR nonlocal_stmt = 16;
-    PassIR pass_stmt = 17;
-    BreakIR break_stmt = 18;
-    ContinueIR continue_stmt = 19;
-    WithIR with_stmt = 20;
-    TryIR try_stmt = 21;
-    TryStarIR try_star_stmt = 22;
-    TypeAliasIR type_alias = 23;
-    AsyncForIR async_for = 24;
-    AsyncFunctionDefIR async_function_def = 25;
-    AsyncWithIR async_with = 26;
-  }
-}
-
-message AsyncForIR {
-  ExprIR target = 1;
-  ExprIR iter = 2;
-  repeated StmtIR body = 3;
-  repeated StmtIR orelse = 4;
+message For {
+  ExprNode target = 1;
+  ExprNode iter = 2;
+  repeated Stmt body = 3;
+  repeated Stmt orelse = 4;
   optional string type_comment = 5;
-  optional SourceSpan span = 6;
+  optional int64 lineno = 6;
+  optional int64 col_offset = 7;
+  optional int64 end_lineno = 8;
+  optional int64 end_col_offset = 9;
 }
 
-message AsyncWithIR {
-  repeated WithItemIR items = 1;
-  repeated StmtIR body = 2;
+message AsyncFor {
+  ExprNode target = 1;
+  ExprNode iter = 2;
+  repeated Stmt body = 3;
+  repeated Stmt orelse = 4;
+  optional string type_comment = 5;
+  optional int64 lineno = 6;
+  optional int64 col_offset = 7;
+  optional int64 end_lineno = 8;
+  optional int64 end_col_offset = 9;
+}
+
+message While {
+  ExprNode test = 1;
+  repeated Stmt body = 2;
+  repeated Stmt orelse = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
+}
+
+message If {
+  ExprNode test = 1;
+  repeated Stmt body = 2;
+  repeated Stmt orelse = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
+}
+
+message With {
+  repeated WithItem items = 1;
+  repeated Stmt body = 2;
   optional string type_comment = 3;
-  optional SourceSpan span = 4;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message AsyncFunctionDefIR {
-  string name = 1;
-  repeated ArgIR args = 2;
-  repeated StmtIR body = 3;
-  repeated ExprIR decorator_list = 4;
-  optional ExprIR returns = 5;
-  optional string type_comment = 6;
-  uint64 scope_id = 7;
-  optional SourceSpan span = 8;
-  repeated TypeParamIR type_params = 9;
-}
-
-message DeleteIR {
-  repeated ExprIR targets = 1;
-  optional SourceSpan span = 2;
-}
-
-message AssertIR {
-  ExprIR test = 1;
-  optional ExprIR msg = 2;
-  optional SourceSpan span = 3;
-}
-
-message RaiseIR {
-  optional ExprIR exc = 1;
-  optional ExprIR cause = 2;
-  optional SourceSpan span = 3;
-}
-
-message GlobalIR {
-  repeated string names = 1;
-  optional SourceSpan span = 2;
-}
-
-message NonlocalIR {
-  repeated string names = 1;
-  optional SourceSpan span = 2;
-}
-
-message PassIR {
-  optional SourceSpan span = 1;
-}
-
-message BreakIR {
-  optional SourceSpan span = 1;
-}
-
-message ContinueIR {
-  optional SourceSpan span = 1;
-}
-
-message WithItemIR {
-  ExprIR context_expr = 1;
-  optional ExprIR optional_vars = 2;
-}
-
-message WithIR {
-  repeated WithItemIR items = 1;
-  repeated StmtIR body = 2;
+message AsyncWith {
+  repeated WithItem items = 1;
+  repeated Stmt body = 2;
   optional string type_comment = 3;
-  optional SourceSpan span = 4;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message ExceptHandlerIR {
-  optional ExprIR type = 1;
-  optional string name = 2;
-  repeated StmtIR body = 3;
-  optional SourceSpan span = 4;
+message Match {
+  ExprNode subject = 1;
+  repeated MatchCase cases = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message TryIR {
-  repeated StmtIR body = 1;
-  repeated ExceptHandlerIR handlers = 2;
-  repeated StmtIR orelse = 3;
-  repeated StmtIR finalbody = 4;
-  optional SourceSpan span = 5;
+message Raise {
+  ExprNode exc = 1;
+  ExprNode cause = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message TryStarIR {
-  repeated StmtIR body = 1;
-  repeated ExceptHandlerIR handlers = 2;
-  repeated StmtIR orelse = 3;
-  repeated StmtIR finalbody = 4;
-  optional SourceSpan span = 5;
+message Try {
+  repeated Stmt body = 1;
+  repeated ExceptHandlerNode handlers = 2;
+  repeated Stmt orelse = 3;
+  repeated Stmt finalbody = 4;
+  optional int64 lineno = 5;
+  optional int64 col_offset = 6;
+  optional int64 end_lineno = 7;
+  optional int64 end_col_offset = 8;
 }
 
-message TypeAliasIR {
-  ExprIR name = 1;
-  repeated TypeParamIR type_params = 2;
-  ExprIR value = 3;
-  optional SourceSpan span = 4;
+message TryStar {
+  repeated Stmt body = 1;
+  repeated ExceptHandlerNode handlers = 2;
+  repeated Stmt orelse = 3;
+  repeated Stmt finalbody = 4;
+  optional int64 lineno = 5;
+  optional int64 col_offset = 6;
+  optional int64 end_lineno = 7;
+  optional int64 end_col_offset = 8;
 }
 
-message BindingIR {
-  int64 id = 1;
-  int64 target_id = 2;
-  optional AnnotationIR annotation = 3;
-  BindingKind kind = 4;
-  optional ExprIR value = 5;
-  int64 scope_id = 6;
-  optional SourceSpan span = 7;
+message Assert {
+  ExprNode test = 1;
+  ExprNode msg = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-enum BindingKind {
-  BINDING_UNKNOWN = 0;
-  BINDING_ASSIGN = 1;
-  BINDING_ANNASSIGN = 2;
+message Import {
+  repeated Alias names = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message AugAssignIR {
-  ExprIR target = 1;
-  Operator op = 2;
-  ExprIR value = 3;
-  optional SourceSpan span = 4;
+message ImportFrom {
+  optional string module = 1;
+  repeated Alias names = 2;
+  optional int32 level = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message ReturnIR {
-  optional ExprIR value = 1;
-  optional SourceSpan span = 2;
+message Global {
+  repeated string names = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message ExprStmtIR {
-  ExprIR value = 1;
-  optional SourceSpan span = 2;
+message Nonlocal {
+  repeated string names = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message IfIR {
-  ExprIR test = 1;
-  int64 scope_id = 2;
-  int64 then_scope_id = 3;
-  int64 else_scope_id = 4;
-  repeated StmtIR body = 5;
-  repeated StmtIR orelse = 6;
-  optional SourceSpan span = 7;
+message Expr {
+  ExprNode value = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message ForLoopIR {
-  ExprIR target = 1;
-  ExprIR iter = 2;
-  int64 scope_id = 3;
-  int64 body_scope_id = 4;
-  repeated StmtIR body = 5;
-  repeated StmtIR orelse = 6;
-  optional SourceSpan span = 7;
+message Pass {
+  optional int64 lineno = 1;
+  optional int64 col_offset = 2;
+  optional int64 end_lineno = 3;
+  optional int64 end_col_offset = 4;
 }
 
-message WhileLoopIR {
-  ExprIR test = 1;
-  int64 scope_id = 2;
-  int64 body_scope_id = 3;
-  repeated StmtIR body = 4;
-  repeated StmtIR orelse = 5;
-  optional SourceSpan span = 6;
+message Break {
+  optional int64 lineno = 1;
+  optional int64 col_offset = 2;
+  optional int64 end_lineno = 3;
+  optional int64 end_col_offset = 4;
 }
 
-message FunctionDefIR {
-  int64 id = 1;
-  int64 symbol_id = 2;
-  string name = 3;
-  int64 scope_id = 4;
-  int64 body_scope_id = 5;
-  repeated ArgIR args = 6;
-  repeated StmtIR body = 7;
-  optional AnnotationIR returns = 8;
-  repeated ExprIR decorator_list = 9;
-  optional SourceSpan span = 10;
-  optional string type_comment = 11;
-  repeated TypeParamIR type_params = 12;
+message Continue {
+  optional int64 lineno = 1;
+  optional int64 col_offset = 2;
+  optional int64 end_lineno = 3;
+  optional int64 end_col_offset = 4;
 }
 
-message ArgIR {
-  int64 symbol_id = 1;
-  string arg = 2;
-  ArgKind kind = 3;
-  optional AnnotationIR annotation = 4;
-  optional ExprIR default = 5;
-  optional SourceSpan span = 6;
+message BoolOp {
+  BoolOperator op = 1;
+  repeated ExprNode values = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message ClassDefIR {
-  int64 id = 1;
-  int64 symbol_id = 2;
-  string name = 3;
-
-  int64 scope_id = 4;
-  int64 body_scope_id = 5;
-
-  repeated StmtIR body = 6;
-  repeated ExprIR bases = 7;
-  repeated ExprIR decorator_list = 8;
-  optional SourceSpan span = 9;
-  repeated KeywordArgIR keywords = 10;
-  repeated TypeParamIR type_params = 11;
+message NamedExpr {
+  ExprNode target = 1;
+  ExprNode value = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message PatternIR {
-  oneof kind {
-    ValuePatternIR value_pattern = 1;
-    SingletonPatternIR singleton_pattern = 2;
-    SequencePatternIR sequence_pattern = 3;
-    MappingPatternIR mapping_pattern = 4;
-    ClassPatternIR class_pattern = 5;
-    StarPatternIR star_pattern = 6;
-    CapturePatternIR capture_pattern = 7;
-    WildcardPatternIR wildcard_pattern = 8;
-    AsPatternIR as_pattern = 9;
-    OrPatternIR or_pattern = 10;
-  }
+message BinOp {
+  ExprNode left = 1;
+  BinaryOperator op = 2;
+  ExprNode right = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message ValuePatternIR {
-  ExprIR value = 1;
-  optional SourceSpan span = 2;
+message UnaryOp {
+  UnaryOperator op = 1;
+  ExprNode operand = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-enum SingletonValue {
-  SINGLETON_VALUE_UNSPECIFIED = 0;
-  SINGLETON_NONE = 1;
-  SINGLETON_TRUE = 2;
-  SINGLETON_FALSE = 3;
+message Lambda {
+  Arguments args = 1;
+  ExprNode body = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message SingletonPatternIR {
-  SingletonValue value = 1;
-  optional SourceSpan span = 2;
+message IfExp {
+  ExprNode test = 1;
+  ExprNode body = 2;
+  ExprNode orelse = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message SequencePatternIR {
-  repeated PatternIR patterns = 1;
-  optional SourceSpan span = 2;
+message Dict {
+  repeated OptionalExpr keys = 1;
+  repeated ExprNode values = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message MappingPatternIR {
-  repeated ExprIR keys = 1;
-  repeated PatternIR patterns = 2;
-  optional string rest = 3;
-  optional SourceSpan span = 4;
+message Set {
+  repeated ExprNode elts = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message ClassPatternIR {
-  ExprIR cls = 1;
-  repeated PatternIR patterns = 2;
-  repeated string kwd_attrs = 3;
-  repeated PatternIR kwd_patterns = 4;
-  optional SourceSpan span = 5;
+message ListComp {
+  ExprNode elt = 1;
+  repeated Comprehension generators = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message StarPatternIR {
-  optional string name = 1;
-  optional SourceSpan span = 2;
+message SetComp {
+  ExprNode elt = 1;
+  repeated Comprehension generators = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message CapturePatternIR {
-  string name = 1;
-  optional SourceSpan span = 2;
+message DictComp {
+  ExprNode key = 1;
+  ExprNode value = 2;
+  repeated Comprehension generators = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message WildcardPatternIR {
-  optional SourceSpan span = 1;
+message GeneratorExp {
+  ExprNode elt = 1;
+  repeated Comprehension generators = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message AsPatternIR {
-  PatternIR pattern = 1;
-  string name = 2;
-  optional SourceSpan span = 3;
+message Await {
+  ExprNode value = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message OrPatternIR {
-  repeated PatternIR patterns = 1;
-  optional SourceSpan span = 2;
+message Yield {
+  ExprNode value = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message MatchIR {
-  ExprIR subject = 2;
-  repeated MatchCaseIR cases = 3;
-  optional SourceSpan span = 4;
+message YieldFrom {
+  ExprNode value = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message MatchCaseIR {
-  int64 scope_id = 1;
-  PatternIR pattern = 2;
-  optional ExprIR guard = 3;
-  repeated StmtIR body = 4;
-  optional SourceSpan span = 5;
+message Compare {
+  ExprNode left = 1;
+  repeated ComparisonOperator ops = 2;
+  repeated ExprNode comparators = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message IfExprIR {
-  ExprIR test = 1;
-  ExprIR body = 2;
-  ExprIR orelse = 3;
-  optional SourceSpan span = 4;
+message Call {
+  ExprNode func = 1;
+  repeated ExprNode args = 2;
+  repeated Keyword keywords = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message ComplexIR {
-  double real = 1;
-  double imag = 2;
-  SourceSpan span = 3;
-}
-
-message CompIR {
-  ExprIR target = 1;
-  ExprIR iter = 2;
-  repeated ExprIR ifs = 3;
-  bool is_async = 4;
-  optional SourceSpan span = 5;
-}
-
-message ListCompIR {
-  ExprIR elt = 1;
-  repeated CompIR generators = 2;
-  optional SourceSpan span = 3;
-}
-
-message SetCompIR {
-  ExprIR elt = 1;
-  repeated CompIR generators = 2;
-  optional SourceSpan span = 3;
-}
-
-message DictCompIR {
-  ExprIR key = 1;
-  ExprIR value = 2;
-  repeated CompIR generators = 3;
-  optional SourceSpan span = 4;
-}
-
-message FormattedValueIR {
-  ExprIR value = 1;
+message FormattedValue {
+  ExprNode value = 1;
   int32 conversion = 2;
-  JoinedStrIR format_spec = 3;
-  optional SourceSpan span = 4;
+  ExprNode format_spec = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message JoinedStrIR {
-  repeated ExprIR values = 1;
-  optional SourceSpan span = 2;
-}
-
-message GeneratorExprIR {
-  ExprIR elt = 1;
-  repeated CompIR generators = 2;
-  optional SourceSpan span = 3;
-}
-
-message AwaitIR {
-  ExprIR value = 1;
-  optional SourceSpan span = 2;
-}
-
-message YieldIR {
-  optional ExprIR value = 1;
-  optional SourceSpan span = 2;
-}
-
-message YieldFromIR {
-  ExprIR value = 1;
-  optional SourceSpan span = 2;
-}
-
-message TemplateStrIR {
-  repeated ExprIR values = 1;
-  optional SourceSpan span = 2;
-}
-
-message InterpolationIR {
-  ExprIR value = 1;
+message Interpolation {
+  ExprNode value = 1;
   optional string str = 2;
   int32 conversion = 3;
-  JoinedStrIR format_spec = 4;
-  optional SourceSpan span = 5;
+  ExprNode format_spec = 4;
+  optional int64 lineno = 5;
+  optional int64 col_offset = 6;
+  optional int64 end_lineno = 7;
+  optional int64 end_col_offset = 8;
 }
 
-message BytesIR {
-  repeated int32 value = 1;
-  optional SourceSpan span = 2;
+message JoinedStr {
+  repeated ExprNode values = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message ConstantIR {
-  oneof kind {
-    IntegerIR integer_lit = 1;
-    FloatIR float_lit = 2;
-    StringIR string_lit = 3;
-    BooleanIR bool_lit = 4;
-    NoneIR none_lit = 5;
-    EllipsisIR ellipsis_lit = 6;
-    ComplexIR complex_lit = 7;
-    BytesIR bytes_lit = 8;
-  }
+message TemplateStr {
+  repeated ExprNode values = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message ExprIR {
-  oneof kind {
-    ConstantIR constant = 1;
-    IdentifierIR identifier = 2;
-    ListIR list = 3;
-    TupleIR tuple = 4;
-    CallExprIR call = 5;
-    AttributeExprIR attribute = 6;
-    BinOpIR binop = 7;
-    UnaryOpIR unaryop = 8;
-    BoolOpIR boolop = 9;
-    CompareIR compare = 10;
-    SubscriptIR subscript = 11;
-    SliceIR slice = 12;
-    DictIR dict = 13;
-    SetIR set = 14;
-    IfExprIR if_expr = 15;
-    StarredIR starred = 16;
-    NamedExprIR named_expr = 17;
-    ListCompIR list_comp = 18;
-    SetCompIR set_comp = 19;
-    DictCompIR dict_comp = 20;
-    GeneratorExprIR generator_expr = 21;
-    JoinedStrIR joined_str = 22;
-    FormattedValueIR formatted_value = 23;
-    AwaitIR await_expr = 24;
-    YieldIR yield_expr = 25;
-    YieldFromIR yield_from = 26;
-    TemplateStrIR template_str = 27;
-    InterpolationIR interpolation = 28;
-  }
+message Constant {
+  ConstantValue value = 1;
+  optional string kind = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-enum ArgKind {
-  ARG_KIND_UNSPECIFIED = 0;
-  ARG_POSITIONAL_ONLY = 1;
-  ARG_POSITIONAL_OR_KEYWORD = 2;
-  ARG_VAR_POSITIONAL = 3;
-  ARG_KEYWORD_ONLY = 4;
-  ARG_VAR_KEYWORD = 5;
-}
-
-message NamedExprIR {
-  ExprIR target = 1;
-  ExprIR value = 2;
-  optional SourceSpan span = 3;
-}
-
-message IdentifierIR {
-  string id = 1;
-  int64 use_scope_id = 2;
-  optional SourceSpan span = 3;
-}
-
-message IntegerIR {
-  int64 value = 1;
-  optional SourceSpan span = 2;
-}
-
-message FloatIR {
-  double value = 1;
-  optional SourceSpan span = 2;
-}
-
-message StringIR {
-  string value = 1;
-  optional SourceSpan span = 2;
-}
-
-message BooleanIR {
-  bool value = 1;
-  optional SourceSpan span = 2;
-}
-
-message NoneIR {
-  optional SourceSpan span = 1;
-}
-
-message EllipsisIR {
-  optional SourceSpan span = 1;
-}
-
-message ListIR {
-  repeated ExprIR elts = 1;
-  optional SourceSpan span = 2;
-}
-
-message TupleIR {
-  repeated ExprIR elts = 1;
-  optional SourceSpan span = 2;
-}
-
-message CallExprIR {
-  ExprIR func = 1;
-  repeated ExprIR args = 2;
-  repeated KeywordArgIR keywords = 3;
-  optional SourceSpan span = 4;
-}
-
-message KeywordArgIR {
-  optional string arg = 1;
-  ExprIR value = 2;
-  optional SourceSpan span = 3;
-}
-
-message AttributeExprIR {
-  ExprIR value = 1;
+message Attribute {
+  ExprNode value = 1;
   string attr = 2;
-  optional SourceSpan span = 3;
+  ExprContext ctx = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message BinOpIR {
-  ExprIR left = 1;
-  ExprIR right = 2;
-  Operator op = 3;
-  optional SourceSpan span = 4;
+message Subscript {
+  ExprNode value = 1;
+  ExprNode slice = 2;
+  ExprContext ctx = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message UnaryOpIR {
-  Operator op = 1;
-  ExprIR operand = 2;
-  optional SourceSpan span = 3;
+message Starred {
+  ExprNode value = 1;
+  ExprContext ctx = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message BoolOpIR {
-  Operator op = 1;
-  repeated ExprIR values = 2;
-  optional SourceSpan span = 3;
+message Name {
+  string id = 1;
+  ExprContext ctx = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message CompareIR {
-  ExprIR left = 1;
-  repeated Operator ops = 2;
-  repeated ExprIR comparators = 3;
-  optional SourceSpan span = 4;
+message List {
+  repeated ExprNode elts = 1;
+  ExprContext ctx = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message SubscriptIR {
-  ExprIR value = 1;
-  ExprIR slice = 2;
-  optional SourceSpan span = 3;
+message Tuple {
+  repeated ExprNode elts = 1;
+  ExprContext ctx = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
 }
 
-message SliceIR {
-  optional ExprIR lower = 1;
-  optional ExprIR upper = 2;
-  optional ExprIR step = 3;
-  optional SourceSpan span = 4;
+message Slice {
+  ExprNode lower = 1;
+  ExprNode upper = 2;
+  ExprNode step = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message AnnotationIR {
-  AnnotationHeadIR head = 1;
-  repeated ExprIR args = 2;
-  optional SourceSpan span = 3;
+message ExceptHandler {
+  ExprNode type = 1;
+  optional string name = 2;
+  repeated Stmt body = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
 }
 
-message AnnotationHeadIR {
-  string root = 1;
-  repeated string attrs = 2;
-  optional int64 scope_id = 3;
-  optional SourceSpan span = 4;
+message MatchValue {
+  ExprNode value = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
 }
 
-message TypeParamIR {
+message MatchSingleton {
+  ConstantValue value = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
+}
+
+message MatchSequence {
+  repeated Pattern patterns = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
+}
+
+message MatchMapping {
+  repeated ExprNode keys = 1;
+  repeated Pattern patterns = 2;
+  optional string rest = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
+}
+
+message MatchClass {
+  ExprNode cls = 1;
+  repeated Pattern patterns = 2;
+  repeated string kwd_attrs = 3;
+  repeated Pattern kwd_patterns = 4;
+  optional int64 lineno = 5;
+  optional int64 col_offset = 6;
+  optional int64 end_lineno = 7;
+  optional int64 end_col_offset = 8;
+}
+
+message MatchStar {
+  optional string name = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
+}
+
+message MatchAs {
+  Pattern pattern = 1;
+  optional string name = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
+}
+
+message MatchOr {
+  repeated Pattern patterns = 1;
+  optional int64 lineno = 2;
+  optional int64 col_offset = 3;
+  optional int64 end_lineno = 4;
+  optional int64 end_col_offset = 5;
+}
+
+message TypeVar {
+  string name = 1;
+  ExprNode bound = 2;
+  ExprNode default_value = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
+}
+
+message ParamSpec {
+  string name = 1;
+  ExprNode default_value = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
+}
+
+message TypeVarTuple {
+  string name = 1;
+  ExprNode default_value = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
+}
+
+message Comprehension {
+  ExprNode target = 1;
+  ExprNode iter = 2;
+  repeated ExprNode ifs = 3;
+  int32 is_async = 4;
+}
+
+message Arguments {
+  repeated Arg posonlyargs = 1;
+  repeated Arg args = 2;
+  Arg vararg = 3;
+  repeated Arg kwonlyargs = 4;
+  repeated OptionalExpr kw_defaults = 5;
+  Arg kwarg = 6;
+  repeated ExprNode defaults = 7;
+}
+
+message Arg {
+  string arg = 1;
+  ExprNode annotation = 2;
+  optional string type_comment = 3;
+  optional int64 lineno = 4;
+  optional int64 col_offset = 5;
+  optional int64 end_lineno = 6;
+  optional int64 end_col_offset = 7;
+}
+
+message Keyword {
+  optional string arg = 1;
+  ExprNode value = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
+}
+
+message Alias {
+  string name = 1;
+  optional string asname = 2;
+  optional int64 lineno = 3;
+  optional int64 col_offset = 4;
+  optional int64 end_lineno = 5;
+  optional int64 end_col_offset = 6;
+}
+
+message WithItem {
+  ExprNode context_expr = 1;
+  ExprNode optional_vars = 2;
+}
+
+message MatchCase {
+  Pattern pattern = 1;
+  ExprNode guard = 2;
+  repeated Stmt body = 3;
+}
+
+message TypeIgnore {
+  int64 lineno = 1;
+  string tag = 2;
+}
+
+message OptionalExpr {
+  ExprNode value = 1;
+}
+
+message ConstantValue {
   oneof kind {
-    TypeVarIR type_var = 1;
-    ParamSpecIR param_spec = 2;
-    TypeVarTupleIR type_var_tuple = 3;
+    string integer = 1;
+    double float = 2;
+    string string = 3;
+    bytes bytes = 4;
+    bool boolean = 5;
+    Complex complex = 6;
+    NoneValue none = 7;
+    EllipsisValue ellipsis = 8;
   }
 }
 
-message TypeVarIR {
-  string name = 1;
-  optional ExprIR bound = 2;
-  optional ExprIR default_value = 3;
-  optional SourceSpan span = 4;
+message Complex {
+  double real = 1;
+  double imag = 2;
 }
 
-message ParamSpecIR {
-  string name = 1;
-  optional ExprIR default_value = 2;
-  optional SourceSpan span = 3;
-}
-
-message TypeVarTupleIR {
-  string name = 1;
-  optional ExprIR default_value = 2;
-  optional SourceSpan span = 3;
-}
-
-message DimIR {
-  oneof kind {
-    UnknownDimIR unknown = 1;
-    SymDimIR symbol = 2;
-    ScalarDimIR scalar = 3;
-    BinaryDimIR binary = 4;
-  }
-}
-
-message UnknownDimIR {
-  optional SourceSpan span = 1;
-}
-
-message SymDimIR {
-  string name = 1;
-  optional SourceSpan span = 2;
-}
-
-message ScalarDimIR {
-  int64 value = 1;
-  optional SourceSpan span = 2;
-}
-
-message BinaryDimIR {
-  Operator operator = 1;
-  DimIR left = 2;
-  DimIR right = 3;
-  optional SourceSpan span = 4;
-}
-
-enum Operator {
-  OP_UNKNOWN = 0;
-  OP_PLUS = 1;
-  OP_MINUS = 2;
-  OP_MUL = 3;
-  OP_MATMUL = 4;
-  OP_DIV = 5;
-  OP_FLOORDIV = 6;
-  OP_MOD = 7;
-  OP_POW = 8;
-  OP_LSHIFT = 9;
-  OP_RSHIFT = 10;
-  OP_BITOR = 11;
-  OP_BITXOR = 12;
-  OP_BITAND = 13;
-  OP_UPLUS = 14;
-  OP_UMINUS = 15;
-  OP_NOT = 16;
-  OP_INVERT = 17;
-  OP_AND = 18;
-  OP_OR = 19;
-  OP_EQ = 20;
-  OP_NE = 21;
-  OP_LT = 22;
-  OP_LTE = 23;
-  OP_GT = 24;
-  OP_GTE = 25;
-  OP_IS = 26;
-  OP_IS_NOT = 27;
-  OP_IN = 28;
-  OP_NOT_IN = 29;
-  OP_PLUS_ASSIGN = 30;
-  OP_MINUS_ASSIGN = 31;
-  OP_MUL_ASSIGN = 32;
-  OP_MATMUL_ASSIGN = 33;
-  OP_DIV_ASSIGN = 34;
-  OP_FLOORDIV_ASSIGN = 35;
-  OP_MOD_ASSIGN = 36;
-  OP_POW_ASSIGN = 37;
-  OP_LSHIFT_ASSIGN = 38;
-  OP_RSHIFT_ASSIGN = 39;
-  OP_BITOR_ASSIGN = 40;
-  OP_BITXOR_ASSIGN = 41;
-  OP_BITAND_ASSIGN = 42;
-  OP_WALRUS = 43;
-}
+message NoneValue {}
+message EllipsisValue {}
